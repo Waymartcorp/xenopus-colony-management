@@ -27,7 +27,14 @@ export type NotificationRuleType =
   | "daily_summary"
   | "environment_note"
   | "performance_decline"
-  | "forecast_summary";
+  | "forecast_summary"
+  | "projected_shortage"
+  | "runout_warning"
+  | "frog_threshold_crossed"
+  | "bin_threshold_crossed"
+  | "weekly_bottleneck_summary"
+  | "monthly_capacity_forecast"
+  | "urgent_repopulation";
 
 export interface NotificationPayload {
   organizationId: string;
@@ -261,4 +268,83 @@ export async function runMonthlyForecast(
 ): Promise<void> {
   // TODO: Generate 30/60/90/120-day forecast
   // TODO: Send forecast summary to configured recipients
+}
+
+// --- Capacity & Run-Out Notification Templates ---
+
+export function generateRunOutWarning(
+  daysUntil: number,
+  useRate: number,
+  threshold: number,
+  runoutDate: string
+): string {
+  return `Run-out warning: At your current use rate of ${useRate} frogs/week, ready frogs are projected to fall below threshold (${threshold}) in ${daysUntil} days (${runoutDate}).`;
+}
+
+export function generateProjectedShortage(
+  shortfall: number,
+  periodDays: number,
+  recommendation: string
+): string {
+  return `Projected shortage: ${shortfall} frogs over the next ${periodDays} days. ${recommendation}`;
+}
+
+export function generateThresholdCrossedAlert(
+  type: "frog" | "bin",
+  current: number,
+  threshold: number
+): string {
+  const label = type === "frog" ? "Ready frogs" : "Ready bins";
+  return `${label} have fallen below threshold: ${current} available (threshold: ${threshold}). Immediate action recommended.`;
+}
+
+export function generateWeeklyBottleneckSummary(stats: {
+  repopNeeded: number;
+  overdueCount: number;
+  shortageRisk: boolean;
+  nextMonthProjection: string;
+}): string {
+  const lines = [
+    "Weekly bottleneck summary:",
+    `• ${stats.repopNeeded} bins need repopulation`,
+    `• ${stats.overdueCount} frogs are overdue for reuse`,
+  ];
+  if (stats.shortageRisk) {
+    lines.push(`• Ready supply is projected to drop below target ${stats.nextMonthProjection}`);
+  }
+  return lines.join("\n");
+}
+
+export function generateMonthlyCapacityForecast(stats: {
+  useRate: number;
+  avgPerformance: number;
+  projectedCapacity: number;
+  bottleneckCount: number;
+  seasonalNote: string | null;
+  recommendations: string[];
+}): string {
+  const lines = [
+    "Monthly colony capacity forecast:",
+    "",
+    `Use rate: ${stats.useRate} frogs/week`,
+    `Average performance: ${stats.avgPerformance}/5`,
+    `Projected capacity: ${stats.projectedCapacity} frogs`,
+    `Active bottlenecks: ${stats.bottleneckCount}`,
+  ];
+  if (stats.seasonalNote) {
+    lines.push("", `Seasonality: ${stats.seasonalNote}`);
+  }
+  if (stats.recommendations.length > 0) {
+    lines.push("", "Recommended adjustments:");
+    stats.recommendations.forEach((r) => lines.push(`• ${r}`));
+  }
+  return lines.join("\n");
+}
+
+export function generateUrgentRepopulationMessage(
+  frogsNeeded: number,
+  timeframeDays: number,
+  reason: string
+): string {
+  return `Repopulation recommendation: Add ${frogsNeeded} mature females over the next ${timeframeDays} days to ${reason}.`;
 }

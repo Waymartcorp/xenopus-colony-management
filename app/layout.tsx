@@ -28,7 +28,9 @@ export default function RootLayout({
                 <NavItem href="/dashboard" label="Today's Actions" />
                 <NavItem href="/bins" label="Bins & Rotation" />
                 <NavItem href="/colony" label="Whole Colony" />
-                <NavItem href="/forecast" label="Calendar / Forecast" />
+                <NavItem href="/forecast" label="Forecast" />
+                <NavItem href="/capacity" label="Capacity / Run-Out" />
+                <NavItem href="/bottlenecks" label="Bottlenecks" />
               </NavSection>
               <NavSection title="Colony">
                 <NavItem href="/frogs" label="Individual Frogs" />
