@@ -63,18 +63,88 @@ If Xenopus 1 or another supplier creates shipment records, the supplier may reta
 
 Customer-added data remains private unless explicitly shared.
 
-## Frog Social Integration
+## Frog Social Integration (Case Packet Architecture)
 
-Nothing is shared with Frog Social automatically.
+**Nothing is shared with Frog Social automatically.**
 
-Users may choose to:
+XenoTrack is the private source of truth. Frog Social receives only selected, user-approved case packets. No colony data is shared without explicit user action.
 
-- Create a Frog Social case
-- Attach selected records
-- Share de-identified case history
-- Request guidance
+### Case Packets
 
-Before sharing, the user must see a preview of what will be shared.
+A case packet is a curated, previewable bundle of selected XenoTrack records that a user may choose to send to Frog Social for case support.
+
+Case packets may include (user selects each category):
+
+- Selected frog records
+- Selected bin/location records
+- Use/rest history
+- Performance ratings
+- Movement/repopulation history
+- Feeding logs (if husbandry module enabled)
+- Husbandry checkpoints (if enabled)
+- Environmental notes (if enabled)
+- Photos (if selected)
+- Protocols/results (if selected)
+- Shipment/source/cohort data (if selected)
+- User-written problem description
+- Date range
+
+### User Flow
+
+1. Choose issue type
+2. Choose scope (frog, bin, multiple bins, rack, room, shipment/cohort, custom date range)
+3. Select data categories to include
+4. Choose sharing mode
+5. Preview exactly what will be shared
+6. Submit case packet (or save as draft)
+
+### Sharing Modes
+
+| Mode | Description |
+|------|-------------|
+| Private case support | Only visible to Frog Social support team. Lab identity known but case is not public. |
+| De-identified community case | Shared anonymously with community archive. Lab identity and frog IDs removed. |
+| Public / attributed case | Shared publicly with lab name attached. |
+
+**Default: Private case support.**
+
+### Preview and Consent
+
+Before submitting, the user must see:
+
+- What records are included
+- What records are excluded
+- Whether lab identity is included
+- Whether photos are included
+- Whether source/shipment data is included
+- Whether environmental/husbandry data is included
+- Whether the case may contribute to broader case history
+
+Clear language: "Your full colony register is not shared. Only the selected records below will be sent."
+
+### Resolution Loop
+
+When Frog Social resolves a case, resolution data may be returned to XenoTrack:
+
+- Resolution summary
+- Likely contributing factors
+- Recommended actions
+- Related case references
+- Status: unresolved / monitoring / resolved
+- User may choose to save resolution to bin/frog history
+
+### Revocation
+
+Users may revoke a shared case at any time. Revoking sets the case_link status to "revoked" and notifies Frog Social to remove shared data.
+
+### Privacy Rules
+
+- No automatic sharing — all case packets are user-initiated
+- No background data collection by Frog Social
+- Preview before every submission
+- De-identification options available
+- Resolution data is private to the organization until user shares further
+- Module must be explicitly enabled before any UI appears
 
 ## Data Retention
 
