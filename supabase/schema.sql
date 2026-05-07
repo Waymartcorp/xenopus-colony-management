@@ -576,6 +576,25 @@ create index if not exists idx_husbandry_tasks_org on husbandry_tasks(organizati
 create index if not exists idx_husbandry_tasks_due on husbandry_tasks(organization_id, due_at);
 
 -- ============================================================
+-- Module Trials (opt-in features, free 90-day trial)
+-- ============================================================
+
+create table if not exists organization_module_trials (
+  id uuid primary key default gen_random_uuid(),
+  organization_id uuid not null references organizations(id) on delete cascade,
+  module_name text not null check (module_name in (
+    'husbandry_tracking','feeding_schedule','environmental_notes',
+    'protocols_results','frog_social_bridge','visual_analytics','imaging_future'
+  )),
+  trial_started_at timestamptz not null default now(),
+  trial_ends_at timestamptz not null default (now() + interval '90 days'),
+  status text not null default 'active' check (status in ('active','expired','converted','disabled')),
+  unique(organization_id, module_name)
+);
+
+create index if not exists idx_module_trials_org on organization_module_trials(organization_id, status);
+
+-- ============================================================
 -- TODO: Analytics views / materialized views for reporting
 -- ============================================================
 -- - Colony state counts (frogs by cycle state, bins by cycle state)
@@ -587,6 +606,11 @@ create index if not exists idx_husbandry_tasks_due on husbandry_tasks(organizati
 -- - Repopulation demand over time
 -- - Run-out projection materialized view
 -- - Bottleneck summary view
--- - Feeding response vs performance correlation
--- - Husbandry exceptions over time
--- - Missed feeding impact analysis
+-- - Feeding response vs performance correlation (husbandry module)
+-- - Husbandry exceptions over time (husbandry module)
+-- - Missed feeding impact analysis (husbandry module)
+--
+-- TODO: Billing/subscription integration (do NOT build yet)
+-- - organization_subscriptions table
+-- - module pricing tiers
+-- - trial expiration handling

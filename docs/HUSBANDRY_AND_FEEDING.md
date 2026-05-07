@@ -1,10 +1,18 @@
-# Husbandry & Feeding Module
+# Husbandry & Feeding Module (Optional Add-On)
 
 ## Overview
 
-The Husbandry module is an **add-on feature** in XenoTrack. It tracks routine colony care — feeding, visual checks, water quality, and recurring maintenance — as first-class data alongside rotation and performance.
+The Husbandry module is an **optional add-on** in XenoTrack. It is NOT part of the base product and does NOT clutter the default dashboard or navigation unless explicitly enabled by the lab.
 
-**Pricing model:** Free for 90 days after activation, then available as an upgrade tier.
+It tracks routine colony care — feeding, visual checks, water quality, and recurring maintenance — as first-class data alongside rotation and performance.
+
+**Availability:** Free 90-day trial during launch. Does not require the base product to be more complex.
+
+**Navigation:** Hidden unless `husbandry_tracking` is in the org's `enabled_modules`.
+
+**Dashboard:** Husbandry actions only appear in "Today's Actions" when the module is active.
+
+See `docs/MODULES.md` for the full base vs optional module architecture.
 
 ## Why Husbandry Matters
 

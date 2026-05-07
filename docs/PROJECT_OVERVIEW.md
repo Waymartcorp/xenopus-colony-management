@@ -10,17 +10,30 @@ Internal repo: `xenopus-colony-management`
 
 XenoTrack is a private, time-aware Xenopus colony management system for labs managing up to 300–400 frogs and 50–75 bins per lab, with launch support for at least 50 labs.
 
-It tracks:
+### Base Product (always included)
 
-- Inventory (frogs, bins, tanks, racks, rooms)
-- Use/rest cycles and rotation
-- Repopulation and bin guidance
-- Performance and results
-- Protocols and outcomes
-- Environmental observations
-- Notifications (email, SMS, in-app)
-- Visual analytics and seasonality
-- Future photo-recognition (architecture only, not yet built)
+- Bin-centered colony register
+- Frog inventory and lifecycle tracking
+- Use/rest rotation and reuse windows
+- Repopulation and bin capacity guidance
+- Next-use recommendations
+- Performance notes
+- Past/future views and calendar
+- Capacity forecasting and run-out prediction
+- Bottleneck detection
+- Email/SMS/in-app notifications
+- Basic photo upload (private storage)
+- Future imaging architecture (not built yet)
+
+### Optional Modules (add-on, free 90-day trial)
+
+- Husbandry tracking (feeding, checkpoints, tasks)
+- Environmental notes and correlation
+- Protocols and structured results
+- Visual analytics and seasonality charts
+- Frog Social bridge (user-controlled, private by default)
+
+See `docs/MODULES.md` for full base vs optional breakdown.
 
 ## What It Is Not
 

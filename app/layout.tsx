@@ -8,6 +8,10 @@ export const metadata: Metadata = {
     "Private, time-aware Xenopus colony management for labs and institutions",
 };
 
+// TODO: Fetch enabled_modules from organization settings / module_trials
+// TODO: Hide optional nav sections when modules are not enabled
+// For now, show base nav always and optional modules with "(opt-in)" marker
+
 export default function RootLayout({
   children,
 }: {
@@ -24,42 +28,48 @@ export default function RootLayout({
               </a>
             </div>
             <div className="flex flex-col gap-5 overflow-y-auto px-3 py-4">
-              <NavSection title="Actions">
+              {/* === BASE PRODUCT (always visible) === */}
+              <NavSection title="Colony">
                 <NavItem href="/dashboard" label="Today's Actions" />
                 <NavItem href="/bins" label="Bins & Rotation" />
                 <NavItem href="/colony" label="Whole Colony" />
-                <NavItem href="/forecast" label="Forecast" />
-                <NavItem href="/capacity" label="Capacity / Run-Out" />
-                <NavItem href="/bottlenecks" label="Bottlenecks" />
-              </NavSection>
-              <NavSection title="Colony">
                 <NavItem href="/frogs" label="Individual Frogs" />
                 <NavItem href="/repopulation" label="Repopulation" />
                 <NavItem href="/locations" label="Rooms & Racks" />
               </NavSection>
-              <NavSection title="Husbandry">
-                <NavItem href="/husbandry" label="Husbandry" />
-                <NavItem href="/feeding" label="Feeding" />
-                <NavItem href="/tasks" label="Tasks" />
+              <NavSection title="Forecast">
+                <NavItem href="/forecast" label="Forecast" />
+                <NavItem href="/capacity" label="Capacity / Run-Out" />
+                <NavItem href="/bottlenecks" label="Bottlenecks" />
               </NavSection>
               <NavSection title="Records">
                 <NavItem href="/events" label="Events" />
                 <NavItem href="/performance" label="Performance" />
-                <NavItem href="/environment" label="Environment" />
                 <NavItem href="/photos" label="Photos" />
                 <NavItem href="/past" label="History" />
-              </NavSection>
-              <NavSection title="Analytics">
-                <NavItem href="/analytics" label="Analytics" />
-                <NavItem href="/seasonality" label="Seasonality" />
-                <NavItem href="/reports" label="Reports" />
               </NavSection>
               <NavSection title="System">
                 <NavItem href="/notifications" label="Notices" />
                 <NavItem href="/shipments" label="Shipments" />
                 <NavItem href="/workspace-profile" label="Workspace" />
-                <NavItem href="/setup" label="Setup Guide" />
               </NavSection>
+
+              {/* === OPTIONAL MODULES (shown when enabled) === */}
+              {/* TODO: Conditionally render based on enabled_modules / active trials */}
+              <div className="border-t border-gray-200 pt-4">
+                <p className="mb-2 px-3 text-xs text-gray-400">Optional Modules</p>
+                <NavSection title="Husbandry">
+                  <NavItem href="/husbandry" label="Husbandry" />
+                  <NavItem href="/feeding" label="Feeding" />
+                  <NavItem href="/tasks" label="Tasks" />
+                </NavSection>
+                <NavSection title="More">
+                  <NavItem href="/environment" label="Environment" />
+                  <NavItem href="/analytics" label="Analytics" />
+                  <NavItem href="/frog-social" label="Frog Social" />
+                  <NavItem href="/modules" label="Manage Modules" />
+                </NavSection>
+              </div>
             </div>
           </nav>
           <div className="flex flex-1 flex-col overflow-y-auto">

@@ -756,3 +756,21 @@ create policy "husbandry_tasks_update" on public.husbandry_tasks
 
 create policy "husbandry_tasks_delete" on public.husbandry_tasks
   for delete using (public.org_role_level(organization_id) >= 3);
+
+
+-- =============================================================================
+-- organization_module_trials
+-- =============================================================================
+alter table public.organization_module_trials enable row level security;
+
+create policy "module_trials_select" on public.organization_module_trials
+  for select using (public.is_org_member(organization_id));
+
+create policy "module_trials_insert" on public.organization_module_trials
+  for insert with check (public.org_role_level(organization_id) >= 3);
+
+create policy "module_trials_update" on public.organization_module_trials
+  for update using (public.org_role_level(organization_id) >= 3);
+
+create policy "module_trials_delete" on public.organization_module_trials
+  for delete using (public.org_role_level(organization_id) >= 4);
