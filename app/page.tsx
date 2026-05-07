@@ -106,35 +106,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Future add-ons */}
-      <section className="border-t border-gray-100 bg-gray-50 py-20">
-        <div className="mx-auto max-w-5xl px-6">
-          <h2 className="text-center text-2xl font-bold text-gray-900">
-            Future add-ons
-          </h2>
-          <p className="mx-auto mt-3 max-w-xl text-center text-sm text-gray-500">
-            XenoTrack starts simple. These capabilities are being developed and
-            will be available as optional upgrades.
-          </p>
-          <div className="mt-10 grid gap-6 sm:grid-cols-3">
-            <AddonCard
-              title="Photo-ID & Imaging"
-              description="Phone-guided frog photo capture, image fingerprinting, and photo-to-frog matching. Use your photo archive to identify individuals."
-              status="Coming soon"
-            />
-            <AddonCard
-              title="Frog Sentinel"
-              description="Husbandry companion — feeding logs, care checkpoints, environmental notes, performance/care correlations, and colony health alerts."
-              status="Coming soon"
-            />
-            <AddonCard
-              title="Frog Social Case Support"
-              description="Optionally share selected records with Frog Social for expert case consultation. No data is shared automatically."
-              status="Future"
-            />
-          </div>
-        </div>
-      </section>
+      {/* Future add-ons section removed — will announce when ready */}
 
       {/* CTA */}
       <section className="py-16 text-center">
@@ -175,24 +147,3 @@ function FeatureCard({ title, description }: { title: string; description: strin
   );
 }
 
-function AddonCard({
-  title,
-  description,
-  status,
-}: {
-  title: string;
-  description: string;
-  status: string;
-}) {
-  return (
-    <div className="rounded-xl border border-gray-200 bg-white p-6">
-      <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-gray-900">{title}</h3>
-        <span className="rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-500">
-          {status}
-        </span>
-      </div>
-      <p className="mt-2 text-sm text-gray-600">{description}</p>
-    </div>
-  );
-}

@@ -54,13 +54,7 @@ export default function RootLayout({
                 <NavItem href="/workspace-profile" label="Workspace" />
               </NavSection>
 
-              {/* Future add-ons — hidden until enabled by admin */}
-              {/* TODO: Conditionally render Husbandry/Sentinel, Analytics, etc. when module is active */}
-              <div className="border-t border-gray-200 pt-4">
-                <NavSection title="">
-                  <NavItem href="/modules" label="Add-ons & Coming Soon" />
-                </NavSection>
-              </div>
+              {/* Future add-ons — not linked until we're ready to offer them */}
             </div>
           </nav>
           <div className="flex flex-1 flex-col overflow-y-auto">
