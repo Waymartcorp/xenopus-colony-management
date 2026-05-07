@@ -186,6 +186,13 @@ export default function DashboardPage() {
           </div>
         </section>
       </div>
+
+      {/* Colony history note */}
+      <div className="mt-8 rounded-lg border border-gray-100 bg-gray-50 p-4 text-center text-sm text-gray-500">
+        Keep every bin and frog record in one place. See what happened, what is
+        ready, and what is coming next. Preserve knowledge across technicians,
+        lab managers, and projects.
+      </div>
     </div>
   );
 }

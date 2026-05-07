@@ -85,9 +85,10 @@ export default function LoginPage() {
           </button>
         </form>
 
-        {/* TODO: Add magic link sign-in option */}
-        <p className="mt-4 text-center text-xs text-gray-400">
-          Magic link sign-in coming soon.
+        <p className="mt-4 text-center text-sm text-gray-500">
+          <Link href="/forgot-password" className="text-brand-600 hover:underline">
+            Forgot password?
+          </Link>
         </p>
 
         <p className="mt-6 text-center text-sm text-gray-600">

@@ -25,15 +25,14 @@ XenoTrack is a private, time-aware Xenopus colony management system for labs man
 - Basic photo upload (private storage)
 - Future imaging architecture (not built yet)
 
-### Optional Modules (add-on, free 90-day trial)
+### Future Paid Add-ons (not part of base product)
 
-- Husbandry tracking (feeding, checkpoints, tasks)
-- Environmental notes and correlation
-- Protocols and structured results
-- Visual analytics and seasonality charts
-- Frog Social bridge (user-controlled, private by default)
+- **Photo-ID & Imaging** — phone-guided capture, fingerprinting, photo-to-frog matching (coming soon)
+- **Frog Sentinel** — husbandry companion: feeding, checkpoints, environmental notes, care correlations (coming soon)
+- **Frog Social Case Support** — user-controlled case sharing for expert consultation (future)
+- **Visual Analytics** — charts, trends, seasonality dashboards (future)
 
-See `docs/MODULES.md` for full base vs optional breakdown.
+These are not available to users now. See `docs/MODULES.md` for the full product ladder.
 
 ## What It Is Not
 

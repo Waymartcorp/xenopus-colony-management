@@ -54,19 +54,11 @@ export default function RootLayout({
                 <NavItem href="/workspace-profile" label="Workspace" />
               </NavSection>
 
-              {/* === OPTIONAL MODULES (shown when enabled) === */}
-              {/* TODO: Conditionally render based on enabled_modules / active trials */}
+              {/* Future add-ons — hidden until enabled by admin */}
+              {/* TODO: Conditionally render Husbandry/Sentinel, Analytics, etc. when module is active */}
               <div className="border-t border-gray-200 pt-4">
-                <p className="mb-2 px-3 text-xs text-gray-400">Optional Modules</p>
-                <NavSection title="Husbandry">
-                  <NavItem href="/husbandry" label="Husbandry" />
-                  <NavItem href="/feeding" label="Feeding" />
-                  <NavItem href="/tasks" label="Tasks" />
-                </NavSection>
-                <NavSection title="More">
-                  <NavItem href="/environment" label="Environment" />
-                  <NavItem href="/analytics" label="Analytics" />
-                  <NavItem href="/modules" label="Manage Modules" />
+                <NavSection title="">
+                  <NavItem href="/modules" label="Add-ons & Coming Soon" />
                 </NavSection>
               </div>
             </div>

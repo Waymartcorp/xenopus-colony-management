@@ -2,28 +2,197 @@ import Link from "next/link";
 
 export default function HomePage() {
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center px-4">
-      <h1 className="text-4xl font-bold text-gray-900">
-        XenoTrack Colony Register
-      </h1>
-      <p className="mt-4 max-w-md text-center text-gray-600">
-        Private Xenopus colony management for labs and institutions. Manage your
-        frog inventory, housing, events, and performance records in one place.
-      </p>
-      <div className="mt-8 flex gap-4">
-        <Link
-          href="/dashboard"
-          className="rounded-lg bg-brand-600 px-6 py-3 text-sm font-semibold text-white shadow-sm hover:bg-brand-700"
-        >
-          Go to Dashboard
-        </Link>
-        <Link
-          href="/institutions"
-          className="rounded-lg border border-gray-300 bg-white px-6 py-3 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50"
-        >
-          Manage Institution
-        </Link>
+    <div className="min-h-screen bg-white">
+      {/* Nav */}
+      <header className="border-b border-gray-100">
+        <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
+          <span className="text-lg font-bold text-brand-700">XenoTrack</span>
+          <div className="flex items-center gap-4">
+            <Link href="/login" className="text-sm font-medium text-gray-600 hover:text-gray-900">
+              Log in
+            </Link>
+            <Link
+              href="/signup"
+              className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700"
+            >
+              Create Account
+            </Link>
+          </div>
+        </div>
+      </header>
+
+      {/* Hero */}
+      <section className="mx-auto max-w-4xl px-6 py-20 text-center">
+        <h1 className="text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl">
+          Your private Xenopus colony register
+        </h1>
+        <p className="mx-auto mt-6 max-w-2xl text-lg text-gray-600">
+          Track bins, frogs, use/rest cycles, performance, and future
+          availability — all in one place. Build years of searchable colony
+          history and never lose institutional knowledge.
+        </p>
+        <div className="mt-10 flex flex-wrap justify-center gap-4">
+          <Link
+            href="/signup"
+            className="rounded-lg bg-brand-600 px-6 py-3 text-sm font-semibold text-white shadow-sm hover:bg-brand-700"
+          >
+            Create Account
+          </Link>
+          <Link
+            href="/login"
+            className="rounded-lg border border-gray-300 bg-white px-6 py-3 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50"
+          >
+            Log In
+          </Link>
+          <a
+            href="#features"
+            className="rounded-lg px-6 py-3 text-sm font-semibold text-brand-600 hover:text-brand-800"
+          >
+            Learn More ↓
+          </a>
+        </div>
+      </section>
+
+      {/* Features */}
+      <section id="features" className="border-t border-gray-100 bg-gray-50 py-20">
+        <div className="mx-auto max-w-5xl px-6">
+          <h2 className="text-center text-2xl font-bold text-gray-900">
+            What XenoTrack does
+          </h2>
+          <p className="mx-auto mt-3 max-w-xl text-center text-gray-600">
+            A bin-centered colony register built for Xenopus labs. Simple by
+            default, powerful when you need it.
+          </p>
+          <div className="mt-12 grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+            <FeatureCard
+              title="Track bins and frogs"
+              description="Organize your colony by bins, racks, and rooms. Every frog lives in a bin with a clear status."
+            />
+            <FeatureCard
+              title="Know what's resting or ready"
+              description="See at a glance which bins have completed rest, which are overdue, and which are next to use."
+            />
+            <FeatureCard
+              title="Plan repopulation"
+              description="Get recommendations for when bins need new frogs, and track where repopulation stock comes from."
+            />
+            <FeatureCard
+              title="Upload frog photos"
+              description="Build a structured photo archive attached to individual frogs, bins, or events. Searchable and permanent."
+            />
+            <FeatureCard
+              title="Track performance over time"
+              description="Log oocyte quality, extract yield, and other performance metrics. See trends across bins and seasons."
+            />
+            <FeatureCard
+              title="Forecast and avoid bottlenecks"
+              description="Capacity planning, run-out prediction, and bottleneck detection so you never run short unexpectedly."
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* Colony history */}
+      <section className="py-20">
+        <div className="mx-auto max-w-3xl px-6 text-center">
+          <h2 className="text-2xl font-bold text-gray-900">
+            Build years of searchable colony history
+          </h2>
+          <p className="mt-4 text-gray-600">
+            Keep every bin and frog record in one place. See what happened, what
+            is ready, and what is coming next. Preserve knowledge across
+            technicians, lab managers, and projects.
+          </p>
+        </div>
+      </section>
+
+      {/* Future add-ons */}
+      <section className="border-t border-gray-100 bg-gray-50 py-20">
+        <div className="mx-auto max-w-5xl px-6">
+          <h2 className="text-center text-2xl font-bold text-gray-900">
+            Future add-ons
+          </h2>
+          <p className="mx-auto mt-3 max-w-xl text-center text-sm text-gray-500">
+            XenoTrack starts simple. These capabilities are being developed and
+            will be available as optional upgrades.
+          </p>
+          <div className="mt-10 grid gap-6 sm:grid-cols-3">
+            <AddonCard
+              title="Photo-ID & Imaging"
+              description="Phone-guided frog photo capture, image fingerprinting, and photo-to-frog matching. Use your photo archive to identify individuals."
+              status="Coming soon"
+            />
+            <AddonCard
+              title="Frog Sentinel"
+              description="Husbandry companion — feeding logs, care checkpoints, environmental notes, performance/care correlations, and colony health alerts."
+              status="Coming soon"
+            />
+            <AddonCard
+              title="Frog Social Case Support"
+              description="Optionally share selected records with Frog Social for expert case consultation. No data is shared automatically."
+              status="Future"
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section className="py-16 text-center">
+        <h2 className="text-xl font-bold text-gray-900">
+          Start tracking your colony today
+        </h2>
+        <p className="mt-2 text-gray-600">
+          Free to set up. No credit card required.
+        </p>
+        <div className="mt-6">
+          <Link
+            href="/signup"
+            className="rounded-lg bg-brand-600 px-6 py-3 text-sm font-semibold text-white shadow-sm hover:bg-brand-700"
+          >
+            Create Account
+          </Link>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="border-t border-gray-100 py-8 text-center text-xs text-gray-400">
+        <div className="flex justify-center gap-4">
+          <Link href="/terms" className="hover:text-gray-600">Terms of Service</Link>
+          <Link href="/privacy" className="hover:text-gray-600">Privacy Policy</Link>
+        </div>
+        <p className="mt-2">© {new Date().getFullYear()} XenoTrack</p>
+      </footer>
+    </div>
+  );
+}
+
+function FeatureCard({ title, description }: { title: string; description: string }) {
+  return (
+    <div className="rounded-xl border border-gray-200 bg-white p-6">
+      <h3 className="text-sm font-semibold text-gray-900">{title}</h3>
+      <p className="mt-2 text-sm text-gray-600">{description}</p>
+    </div>
+  );
+}
+
+function AddonCard({
+  title,
+  description,
+  status,
+}: {
+  title: string;
+  description: string;
+  status: string;
+}) {
+  return (
+    <div className="rounded-xl border border-gray-200 bg-white p-6">
+      <div className="flex items-center justify-between">
+        <h3 className="text-sm font-semibold text-gray-900">{title}</h3>
+        <span className="rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-500">
+          {status}
+        </span>
       </div>
+      <p className="mt-2 text-sm text-gray-600">{description}</p>
     </div>
   );
 }
