@@ -2,17 +2,29 @@
 
 import { useState } from "react";
 import Link from "next/link";
-
-// TODO: Wire to Supabase Auth resetPasswordForEmail
+import { resetPasswordRequest } from "@/lib/auth";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    // TODO: Call supabase.auth.resetPasswordForEmail(email)
+    setLoading(true);
+    setError(null);
+
+    const { error: resetError } = await resetPasswordRequest(email);
+
+    if (resetError) {
+      setError(resetError.message);
+      setLoading(false);
+      return;
+    }
+
     setSent(true);
+    setLoading(false);
   }
 
   if (sent) {
@@ -40,6 +52,11 @@ export default function ForgotPasswordPage() {
           Enter your email and we&apos;ll send a reset link.
         </p>
         <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+          {error && (
+            <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+              {error}
+            </div>
+          )}
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-gray-700">
               Email
@@ -56,9 +73,10 @@ export default function ForgotPasswordPage() {
           </div>
           <button
             type="submit"
-            className="w-full rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-700"
+            disabled={loading}
+            className="w-full rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-50"
           >
-            Send Reset Link
+            {loading ? "Sending..." : "Send Reset Link"}
           </button>
         </form>
         <p className="mt-4 text-center text-sm text-gray-500">

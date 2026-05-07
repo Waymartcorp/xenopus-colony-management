@@ -2,11 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-
-// TODO: Wire to Supabase Auth signInWithPassword
-// TODO: Add magic link option
-// TODO: Redirect to /dashboard on success
-// TODO: Check user_legal_acceptances; redirect to /terms if not accepted
+import { signIn } from "@/lib/auth";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -19,16 +15,15 @@ export default function LoginPage() {
     setLoading(true);
     setError(null);
 
-    try {
-      // TODO: Call Supabase auth.signInWithPassword({ email, password })
-      // TODO: Check for errors, redirect on success
-      console.log("Login attempt:", email);
-      window.location.href = "/dashboard";
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Login failed");
-    } finally {
+    const { error: authError } = await signIn(email, password);
+
+    if (authError) {
+      setError(authError.message);
       setLoading(false);
+      return;
     }
+
+    window.location.href = "/dashboard";
   }
 
   return (
@@ -51,10 +46,11 @@ export default function LoginPage() {
           )}
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">
+            <label htmlFor="email" className="block text-sm font-medium text-gray-700">
               Email
             </label>
             <input
+              id="email"
               type="email"
               required
               value={email}
@@ -64,10 +60,11 @@ export default function LoginPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">
+            <label htmlFor="password" className="block text-sm font-medium text-gray-700">
               Password
             </label>
             <input
+              id="password"
               type="password"
               required
               value={password}

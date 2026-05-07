@@ -3,6 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 
 /**
  * Browser-side Supabase client (uses anon key, respects RLS).
+ * Use in client components and client-side actions.
  */
 export function createBrowserSupabaseClient() {
   return createBrowserClient(
@@ -13,6 +14,7 @@ export function createBrowserSupabaseClient() {
 
 /**
  * Server-side admin client (bypasses RLS, use only in API routes/server actions).
+ * NEVER expose to client code.
  */
 export function createServerSupabaseClient() {
   return createClient(
@@ -20,6 +22,3 @@ export function createServerSupabaseClient() {
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   );
 }
-
-// TODO: Add cookie-based SSR client for Server Components using @supabase/ssr
-// TODO: Add middleware helper for auth session refresh

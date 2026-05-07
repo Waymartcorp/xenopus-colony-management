@@ -2,22 +2,16 @@
 
 import { useState } from "react";
 import Link from "next/link";
-
-// TODO: Wire to Supabase Auth signUp
-// TODO: Create organization + membership on successful signup
-// TODO: Redirect to /onboarding after signup
-// TODO: Check user_legal_acceptances before granting access
+import { signUp } from "@/lib/auth";
 
 export default function SignupPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [orgName, setOrgName] = useState("");
-  const [phone, setPhone] = useState("");
-  const [labMode, setLabMode] = useState("general");
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -25,33 +19,52 @@ export default function SignupPage() {
       setError("You must accept the Terms of Service and Privacy Policy.");
       return;
     }
+    if (password.length < 8) {
+      setError("Password must be at least 8 characters.");
+      return;
+    }
     setLoading(true);
     setError(null);
 
-    try {
-      // TODO: Call Supabase auth.signUp with email, password, options: { data: { name, phone } }
-      // TODO: Create organization record with orgName and labMode
-      // TODO: Create organization_membership with role 'owner'
-      // TODO: Create user_legal_acceptances record
-      // TODO: Redirect to /onboarding
-      console.log("Signup:", { name, email, orgName, phone, labMode });
-      window.location.href = "/onboarding";
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Signup failed");
-    } finally {
+    const { error: authError } = await signUp(email, password, { full_name: name });
+
+    if (authError) {
+      setError(authError.message);
       setLoading(false);
+      return;
     }
+
+    setSuccess(true);
+    setLoading(false);
+  }
+
+  if (success) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
+        <div className="w-full max-w-sm text-center">
+          <h1 className="text-2xl font-bold text-gray-900">Check your email</h1>
+          <p className="mt-3 text-sm text-gray-600">
+            We sent a confirmation link to <strong>{email}</strong>.
+            Click it to activate your account, then log in to set up your colony.
+          </p>
+          <Link
+            href="/login"
+            className="mt-6 inline-block rounded-lg bg-brand-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-brand-700"
+          >
+            Go to Login
+          </Link>
+        </div>
+      </div>
+    );
   }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
-      <div className="w-full max-w-md">
+      <div className="w-full max-w-sm">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900">
-            Create your XenoTrack account
-          </h1>
+          <h1 className="text-2xl font-bold text-gray-900">Create your account</h1>
           <p className="mt-2 text-sm text-gray-600">
-            Set up your lab workspace to manage your Xenopus colony.
+            Start tracking your Xenopus colony in minutes.
           </p>
         </div>
 
@@ -63,109 +76,68 @@ export default function SignupPage() {
           )}
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Your Name
+            <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+              Full name
             </label>
             <input
+              id="name"
               type="text"
               required
               value={name}
               onChange={(e) => setName(e.target.value)}
               className="mt-1 w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+              placeholder="Jane Smith"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">
+            <label htmlFor="email" className="block text-sm font-medium text-gray-700">
               Email
             </label>
             <input
+              id="email"
               type="email"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="mt-1 w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+              placeholder="you@lab.edu"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">
+            <label htmlFor="password" className="block text-sm font-medium text-gray-700">
               Password
             </label>
             <input
+              id="password"
               type="password"
               required
-              minLength={8}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="mt-1 w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+              placeholder="At least 8 characters"
             />
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Lab / Organization Name
-            </label>
-            <input
-              type="text"
-              required
-              value={orgName}
-              onChange={(e) => setOrgName(e.target.value)}
-              placeholder="e.g. Smith Lab, University of Example"
-              className="mt-1 w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Phone Number{" "}
-              <span className="text-gray-400">(optional, for SMS alerts)</span>
-            </label>
-            <input
-              type="tel"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              className="mt-1 w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Primary Lab Mode{" "}
-              <span className="text-gray-400">(can change later)</span>
-            </label>
-            <select
-              value={labMode}
-              onChange={(e) => setLabMode(e.target.value)}
-              className="mt-1 w-full rounded-lg border border-gray-300 px-4 py-2 text-sm"
-            >
-              <option value="general">General Colony</option>
-              <option value="extract">Extract Lab</option>
-              <option value="developmental">Developmental Lab</option>
-              <option value="ovary_oocyte">Ovary &amp; Oocyte</option>
-              <option value="transgenic">Transgenic / Embryo</option>
-            </select>
-          </div>
-
-          <div className="flex items-start gap-2">
+          <label className="flex items-start gap-2">
             <input
               type="checkbox"
-              id="terms"
               checked={acceptedTerms}
               onChange={(e) => setAcceptedTerms(e.target.checked)}
-              className="mt-1 h-4 w-4 rounded border-gray-300"
+              className="mt-0.5 h-4 w-4 rounded border-gray-300"
             />
-            <label htmlFor="terms" className="text-sm text-gray-600">
+            <span className="text-sm text-gray-600">
               I agree to the{" "}
-              <Link href="/terms" className="text-brand-600 hover:underline">
+              <Link href="/terms" className="text-brand-600 hover:underline" target="_blank">
                 Terms of Service
               </Link>{" "}
               and{" "}
-              <Link href="/privacy" className="text-brand-600 hover:underline">
+              <Link href="/privacy" className="text-brand-600 hover:underline" target="_blank">
                 Privacy Policy
               </Link>
-            </label>
-          </div>
+            </span>
+          </label>
 
           <button
             type="submit"
@@ -179,7 +151,7 @@ export default function SignupPage() {
         <p className="mt-6 text-center text-sm text-gray-600">
           Already have an account?{" "}
           <Link href="/login" className="text-brand-600 hover:underline">
-            Sign in
+            Log in
           </Link>
         </p>
       </div>
