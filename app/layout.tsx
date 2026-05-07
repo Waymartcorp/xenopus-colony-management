@@ -66,7 +66,6 @@ export default function RootLayout({
                 <NavSection title="More">
                   <NavItem href="/environment" label="Environment" />
                   <NavItem href="/analytics" label="Analytics" />
-                  <NavItem href="/frog-social" label="Frog Social" />
                   <NavItem href="/modules" label="Manage Modules" />
                 </NavSection>
               </div>

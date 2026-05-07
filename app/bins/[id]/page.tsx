@@ -120,16 +120,8 @@ export default function BinDetailPage({
           <ActionButton label="Send Notice" />
           <ActionButton label="Acknowledge Notice" />
         </div>
-        {/* Frog Social contextual case link (shown when bridge module enabled) */}
-        {/* TODO: Only render when frog_social_bridge module is enabled */}
-        <div className="mt-4 border-t border-gray-100 pt-4">
-          <a
-            href={`/frog-social/create?scope=bin&source_id=${MOCK_BIN.id}&label=${encodeURIComponent(MOCK_BIN.label)}`}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-purple-300 bg-purple-50 px-3 py-1.5 text-xs font-medium text-purple-700 hover:bg-purple-100"
-          >
-            <span>🔗</span> Create Frog Social case from this bin
-          </a>
-        </div>
+        {/* Frog Social case link — hidden until bridge module is explicitly enabled
+            Architecture exists at /frog-social/create but is not user-facing yet */}
       </section>
 
       {/* Frogs in this bin */}

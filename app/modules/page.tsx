@@ -40,13 +40,8 @@ const MODULES: Module[] = [
       "Define lab protocols and record structured results linked to events. Track extraction yields, oocyte quality, and embryo outcomes.",
     status: "available",
   },
-  {
-    id: "frog_social_bridge",
-    name: "Frog Social Bridge",
-    description:
-      "Connect selected XenoTrack records to Frog Social cases. Compare your data against the broader Xenopus case-history archive. You control what is shared.",
-    status: "available",
-  },
+  // Frog Social Bridge is architecturally ready but not user-facing yet.
+  // It will be listed here when the integration is ready for users.
   {
     id: "visual_analytics",
     name: "Visual Analytics",
