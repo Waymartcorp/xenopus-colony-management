@@ -489,6 +489,93 @@ create index if not exists idx_bottlenecks_org on bottlenecks(organization_id, s
 create index if not exists idx_bottlenecks_severity on bottlenecks(organization_id, severity);
 
 -- ============================================================
+-- Husbandry Module (add-on, free 90 days, then upgrade)
+-- ============================================================
+-- Tracks routine colony care: visual checks, feeding, tasks,
+-- and links husbandry conditions to performance/welfare.
+
+create table if not exists husbandry_checkpoints (
+  id uuid primary key default gen_random_uuid(),
+  organization_id uuid not null references organizations(id) on delete cascade,
+  location_id uuid references locations(id) on delete set null,
+  frog_id uuid references frogs(id) on delete set null,
+  checkpoint_type text not null check (checkpoint_type in (
+    'daily_visual','feeding','mortality','behavior_activity',
+    'water_level','cleanliness','system_filter','light_cycle',
+    'temperature','ph','conductivity','flow_nozzle',
+    'vibration_disturbance','density','quarantine',
+    'post_shipment_acclimation','post_use_recovery'
+  )),
+  status text not null default 'normal' check (status in ('normal','attention','urgent','skipped')),
+  notes text,
+  checked_by uuid not null,
+  checked_at timestamptz not null default now(),
+  next_due_at timestamptz,
+  linked_event_id uuid
+);
+
+create index if not exists idx_husbandry_cp_org on husbandry_checkpoints(organization_id, checked_at desc);
+create index if not exists idx_husbandry_cp_location on husbandry_checkpoints(location_id);
+create index if not exists idx_husbandry_cp_type on husbandry_checkpoints(organization_id, checkpoint_type);
+create index if not exists idx_husbandry_cp_due on husbandry_checkpoints(organization_id, next_due_at);
+
+create table if not exists feeding_schedules (
+  id uuid primary key default gen_random_uuid(),
+  organization_id uuid not null references organizations(id) on delete cascade,
+  location_id uuid references locations(id) on delete set null,
+  feed_type text not null,
+  default_amount numeric,
+  unit text,
+  frequency text not null default 'daily',
+  time_of_day time,
+  active boolean not null default true,
+  notes text,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists idx_feeding_schedules_org on feeding_schedules(organization_id, active);
+
+create table if not exists feeding_logs (
+  id uuid primary key default gen_random_uuid(),
+  organization_id uuid not null references organizations(id) on delete cascade,
+  location_id uuid references locations(id) on delete set null,
+  feed_type text not null,
+  amount numeric,
+  unit text,
+  feeding_method text,
+  response_rating text check (response_rating in ('poor','fair','good','excellent')),
+  notes text,
+  fed_by uuid not null,
+  fed_at timestamptz not null default now(),
+  next_due_at timestamptz
+);
+
+create index if not exists idx_feeding_logs_org on feeding_logs(organization_id, fed_at desc);
+create index if not exists idx_feeding_logs_location on feeding_logs(location_id);
+create index if not exists idx_feeding_logs_response on feeding_logs(organization_id, response_rating);
+
+create table if not exists husbandry_tasks (
+  id uuid primary key default gen_random_uuid(),
+  organization_id uuid not null references organizations(id) on delete cascade,
+  location_id uuid references locations(id) on delete set null,
+  task_type text not null,
+  title text not null,
+  description text,
+  frequency text not null default 'daily' check (frequency in ('daily','weekly','monthly','custom')),
+  assigned_role text,
+  assigned_user_id uuid,
+  due_at timestamptz,
+  completed_at timestamptz,
+  skipped_at timestamptz,
+  status text not null default 'pending' check (status in ('pending','completed','skipped','overdue')),
+  notification_enabled boolean not null default true,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists idx_husbandry_tasks_org on husbandry_tasks(organization_id, status);
+create index if not exists idx_husbandry_tasks_due on husbandry_tasks(organization_id, due_at);
+
+-- ============================================================
 -- TODO: Analytics views / materialized views for reporting
 -- ============================================================
 -- - Colony state counts (frogs by cycle state, bins by cycle state)
@@ -500,3 +587,6 @@ create index if not exists idx_bottlenecks_severity on bottlenecks(organization_
 -- - Repopulation demand over time
 -- - Run-out projection materialized view
 -- - Bottleneck summary view
+-- - Feeding response vs performance correlation
+-- - Husbandry exceptions over time
+-- - Missed feeding impact analysis

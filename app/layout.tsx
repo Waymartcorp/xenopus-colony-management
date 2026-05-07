@@ -37,6 +37,11 @@ export default function RootLayout({
                 <NavItem href="/repopulation" label="Repopulation" />
                 <NavItem href="/locations" label="Rooms & Racks" />
               </NavSection>
+              <NavSection title="Husbandry">
+                <NavItem href="/husbandry" label="Husbandry" />
+                <NavItem href="/feeding" label="Feeding" />
+                <NavItem href="/tasks" label="Tasks" />
+              </NavSection>
               <NavSection title="Records">
                 <NavItem href="/events" label="Events" />
                 <NavItem href="/performance" label="Performance" />

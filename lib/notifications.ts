@@ -34,7 +34,15 @@ export type NotificationRuleType =
   | "bin_threshold_crossed"
   | "weekly_bottleneck_summary"
   | "monthly_capacity_forecast"
-  | "urgent_repopulation";
+  | "urgent_repopulation"
+  | "feeding_due"
+  | "feeding_missed"
+  | "husbandry_checkpoint_due"
+  | "husbandry_checkpoint_overdue"
+  | "abnormal_checkpoint"
+  | "post_use_recovery_due"
+  | "post_shipment_acclimation_due"
+  | "density_review_due";
 
 export interface NotificationPayload {
   organizationId: string;
@@ -347,4 +355,58 @@ export function generateUrgentRepopulationMessage(
   reason: string
 ): string {
   return `Repopulation recommendation: Add ${frogsNeeded} mature females over the next ${timeframeDays} days to ${reason}.`;
+}
+
+// --- Husbandry Notification Templates ---
+
+export function generateFeedingDueMessage(
+  location: string,
+  time: string
+): string {
+  return `Feeding due: ${location} at ${time}.`;
+}
+
+export function generateFeedingMissedMessage(
+  location: string,
+  dueAt: string
+): string {
+  return `Missed feeding: ${location} was due at ${dueAt} and has not been logged. Please feed or reschedule.`;
+}
+
+export function generateHusbandryCheckpointDueMessage(
+  checkpointType: string,
+  location: string
+): string {
+  return `Husbandry checkpoint due: ${checkpointType} for ${location}.`;
+}
+
+export function generateHusbandryCheckpointOverdueMessage(
+  checkpointType: string,
+  location: string,
+  daysPast: number
+): string {
+  return `Husbandry checkpoint overdue: ${checkpointType} for ${location} (${daysPast} days past due).`;
+}
+
+export function generateAbnormalCheckpointMessage(
+  checkpointType: string,
+  location: string,
+  status: string,
+  notes: string
+): string {
+  return `Attention: ${checkpointType} for ${location} marked ${status}. ${notes}`;
+}
+
+export function generatePostUseRecoveryMessage(
+  location: string,
+  daysSinceUse: number
+): string {
+  return `Post-use recovery check due: ${location} (${daysSinceUse} days since extraction). Verify feeding response and behavior.`;
+}
+
+export function generateConsecutivePoorFeedingMessage(
+  location: string,
+  count: number
+): string {
+  return `Attention: ${location} feeding response marked poor for ${count} consecutive feedings. Review bin health.`;
 }

@@ -691,3 +691,68 @@ create policy "bottlenecks_update" on public.bottlenecks
 
 create policy "bottlenecks_delete" on public.bottlenecks
   for delete using (public.org_role_level(organization_id) >= 3);
+
+
+-- =============================================================================
+-- Husbandry Module
+-- =============================================================================
+
+-- husbandry_checkpoints
+alter table public.husbandry_checkpoints enable row level security;
+
+create policy "husbandry_cp_select" on public.husbandry_checkpoints
+  for select using (public.is_org_member(organization_id));
+
+create policy "husbandry_cp_insert" on public.husbandry_checkpoints
+  for insert with check (public.org_role_level(organization_id) >= 1);
+
+create policy "husbandry_cp_update" on public.husbandry_checkpoints
+  for update using (public.org_role_level(organization_id) >= 1);
+
+create policy "husbandry_cp_delete" on public.husbandry_checkpoints
+  for delete using (public.org_role_level(organization_id) >= 3);
+
+-- feeding_schedules
+alter table public.feeding_schedules enable row level security;
+
+create policy "feeding_sched_select" on public.feeding_schedules
+  for select using (public.is_org_member(organization_id));
+
+create policy "feeding_sched_insert" on public.feeding_schedules
+  for insert with check (public.org_role_level(organization_id) >= 2);
+
+create policy "feeding_sched_update" on public.feeding_schedules
+  for update using (public.org_role_level(organization_id) >= 2);
+
+create policy "feeding_sched_delete" on public.feeding_schedules
+  for delete using (public.org_role_level(organization_id) >= 3);
+
+-- feeding_logs
+alter table public.feeding_logs enable row level security;
+
+create policy "feeding_logs_select" on public.feeding_logs
+  for select using (public.is_org_member(organization_id));
+
+create policy "feeding_logs_insert" on public.feeding_logs
+  for insert with check (public.org_role_level(organization_id) >= 1);
+
+create policy "feeding_logs_update" on public.feeding_logs
+  for update using (public.org_role_level(organization_id) >= 1);
+
+create policy "feeding_logs_delete" on public.feeding_logs
+  for delete using (public.org_role_level(organization_id) >= 3);
+
+-- husbandry_tasks
+alter table public.husbandry_tasks enable row level security;
+
+create policy "husbandry_tasks_select" on public.husbandry_tasks
+  for select using (public.is_org_member(organization_id));
+
+create policy "husbandry_tasks_insert" on public.husbandry_tasks
+  for insert with check (public.org_role_level(organization_id) >= 2);
+
+create policy "husbandry_tasks_update" on public.husbandry_tasks
+  for update using (public.org_role_level(organization_id) >= 1);
+
+create policy "husbandry_tasks_delete" on public.husbandry_tasks
+  for delete using (public.org_role_level(organization_id) >= 3);
