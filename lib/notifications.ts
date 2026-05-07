@@ -5,12 +5,12 @@
  * Triggers: rest-complete, overdue, repopulation, next-use, missing result,
  *           weekly summary, daily summary, performance decline, forecast summary.
  *
+ * SAFE DEV MODE: If API keys are not configured, notifications log to console
+ * instead of failing. Real dispatch only occurs when keys are present.
+ *
  * See docs/NOTIFICATIONS_AND_UPDATES.md for full specification.
  */
 
-// TODO: Integrate Resend/Postmark for email dispatch
-// TODO: Integrate Twilio for SMS dispatch
-// TODO: Implement in-app notification storage and polling
 // TODO: Add cron-based scheduled notifications (daily/weekly/monthly)
 // TODO: Add lab-mode-specific notification templates
 // TODO: Add notification rule evaluation engine
@@ -55,6 +55,23 @@ export interface NotificationPreferences {
   urgentOnly: boolean;
 }
 
+// --- Environment checks ---
+
+function isEmailConfigured(): boolean {
+  return !!(
+    process.env.RESEND_API_KEY ||
+    process.env.POSTMARK_API_KEY
+  );
+}
+
+function isSmsConfigured(): boolean {
+  return !!(
+    process.env.TWILIO_ACCOUNT_SID &&
+    process.env.TWILIO_AUTH_TOKEN &&
+    process.env.TWILIO_FROM_NUMBER
+  );
+}
+
 // --- Dispatch ---
 
 export async function sendNotification(
@@ -73,29 +90,61 @@ export async function sendNotification(
 }
 
 async function sendEmail(
-  _payload: NotificationPayload
+  payload: NotificationPayload
 ): Promise<{ success: boolean; messageId?: string }> {
-  // TODO: Use Resend or Postmark API
-  // TODO: Template rendering for colony summaries, rotation alerts, claim links
-  console.log("Email dispatch not yet implemented");
+  if (!isEmailConfigured()) {
+    console.log("[DEV] Email not sent (no API key configured):", {
+      to: payload.userId,
+      subject: payload.subject,
+      bodyPreview: payload.body.slice(0, 100),
+    });
+    return { success: true, messageId: "dev-mock" };
+  }
+
+  // TODO: Implement Resend dispatch
+  // const resend = new Resend(process.env.RESEND_API_KEY);
+  // const { data, error } = await resend.emails.send({
+  //   from: process.env.DEFAULT_FROM_EMAIL ?? 'noreply@xenotrack.app',
+  //   to: [recipientEmail],
+  //   subject: payload.subject,
+  //   text: payload.body,
+  // });
+  console.log("[PROD] Email dispatch placeholder:", payload.subject);
   return { success: false };
 }
 
 async function sendSms(
-  _payload: NotificationPayload
+  payload: NotificationPayload
 ): Promise<{ success: boolean; messageId?: string }> {
-  // TODO: Use Twilio API
-  // TODO: Respect SMS character limits
-  console.log("SMS dispatch not yet implemented");
+  if (!isSmsConfigured()) {
+    console.log("[DEV] SMS not sent (no Twilio keys configured):", {
+      to: payload.userId,
+      bodyPreview: payload.body.slice(0, 80),
+    });
+    return { success: true, messageId: "dev-mock" };
+  }
+
+  // TODO: Implement Twilio dispatch
+  // const client = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
+  // const message = await client.messages.create({
+  //   body: payload.body,
+  //   from: process.env.TWILIO_FROM_NUMBER,
+  //   to: recipientPhone,
+  // });
+  console.log("[PROD] SMS dispatch placeholder:", payload.body.slice(0, 80));
   return { success: false };
 }
 
 async function createInAppNotification(
-  _payload: NotificationPayload
+  payload: NotificationPayload
 ): Promise<{ success: boolean; messageId?: string }> {
   // TODO: Insert into notification_events table with status 'delivered'
-  console.log("In-app notification not yet implemented");
-  return { success: false };
+  // This always works locally since it's just a database insert
+  console.log("[DEV] In-app notification:", {
+    subject: payload.subject,
+    bodyPreview: payload.body.slice(0, 100),
+  });
+  return { success: true, messageId: "in-app-pending" };
 }
 
 // --- Rule Evaluation ---

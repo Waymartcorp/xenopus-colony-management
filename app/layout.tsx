@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import UserHeader from "@/components/UserHeader";
 
 export const metadata: Metadata = {
   title: "XenoTrack Colony Register",
@@ -18,27 +19,28 @@ export default function RootLayout({
         <div className="flex min-h-screen">
           <nav className="hidden w-64 flex-shrink-0 border-r border-gray-200 bg-white lg:block">
             <div className="flex h-16 items-center border-b border-gray-200 px-6">
-              <span className="text-lg font-bold text-brand-700">
+              <a href="/dashboard" className="text-lg font-bold text-brand-700">
                 XenoTrack
-              </span>
+              </a>
             </div>
-            <div className="flex flex-col gap-6 overflow-y-auto px-3 py-4">
+            <div className="flex flex-col gap-5 overflow-y-auto px-3 py-4">
+              <NavSection title="Actions">
+                <NavItem href="/dashboard" label="Today's Actions" />
+                <NavItem href="/bins" label="Bins & Rotation" />
+                <NavItem href="/colony" label="Whole Colony" />
+                <NavItem href="/forecast" label="Calendar / Forecast" />
+              </NavSection>
               <NavSection title="Colony">
-                <NavItem href="/dashboard" label="Dashboard" />
-                <NavItem href="/frogs" label="Frogs" />
-                <NavItem href="/locations" label="Bins / Locations" />
-              </NavSection>
-              <NavSection title="Rotation">
-                <NavItem href="/rotation" label="Rotation" />
+                <NavItem href="/frogs" label="Individual Frogs" />
                 <NavItem href="/repopulation" label="Repopulation" />
-                <NavItem href="/forecast" label="Future View" />
-                <NavItem href="/past" label="Past View" />
+                <NavItem href="/locations" label="Rooms & Racks" />
               </NavSection>
-              <NavSection title="Data">
+              <NavSection title="Records">
                 <NavItem href="/events" label="Events" />
                 <NavItem href="/performance" label="Performance" />
                 <NavItem href="/environment" label="Environment" />
                 <NavItem href="/photos" label="Photos" />
+                <NavItem href="/past" label="History" />
               </NavSection>
               <NavSection title="Analytics">
                 <NavItem href="/analytics" label="Analytics" />
@@ -46,14 +48,17 @@ export default function RootLayout({
                 <NavItem href="/reports" label="Reports" />
               </NavSection>
               <NavSection title="System">
-                <NavItem href="/notifications" label="Notifications" />
+                <NavItem href="/notifications" label="Notices" />
                 <NavItem href="/shipments" label="Shipments" />
-                <NavItem href="/workspace-profile" label="Workspace Profile" />
-                <NavItem href="/institutions" label="Institution" />
+                <NavItem href="/workspace-profile" label="Workspace" />
+                <NavItem href="/setup" label="Setup Guide" />
               </NavSection>
             </div>
           </nav>
-          <main className="flex-1 overflow-y-auto">{children}</main>
+          <div className="flex flex-1 flex-col overflow-y-auto">
+            <UserHeader />
+            <main className="flex-1">{children}</main>
+          </div>
         </div>
       </body>
     </html>

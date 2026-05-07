@@ -2,18 +2,21 @@ import { createBrowserSupabaseClient } from "./supabase";
 
 const PHOTOS_BUCKET = "frog-photos";
 
-// TODO: Create bucket on first use or via Supabase dashboard
-// TODO: Set up storage policies (org-scoped access)
-// TODO: Generate thumbnails (server-side or edge function)
+// File path convention: {organization_id}/{context_id}/{filename}
+// The bucket is PRIVATE. Use signed URLs to serve images.
+
+// TODO: Set up storage policies in Supabase dashboard (see supabase/policies.sql)
+// TODO: Generate thumbnails server-side or via edge function
+// TODO: Validate file types and size before upload
 
 export async function uploadFrogPhoto(
   file: File,
   organizationId: string,
-  frogId: string
-): Promise<{ url: string; path: string }> {
+  contextId: string // frog_id, shipment_id, or event context
+): Promise<{ path: string; signedUrl: string }> {
   const supabase = createBrowserSupabaseClient();
   const ext = file.name.split(".").pop() ?? "jpg";
-  const fileName = `${organizationId}/${frogId}/${Date.now()}.${ext}`;
+  const fileName = `${organizationId}/${contextId}/${Date.now()}.${ext}`;
 
   const { data, error } = await supabase.storage
     .from(PHOTOS_BUCKET)
@@ -24,11 +27,45 @@ export async function uploadFrogPhoto(
 
   if (error) throw error;
 
-  const {
-    data: { publicUrl },
-  } = supabase.storage.from(PHOTOS_BUCKET).getPublicUrl(data.path);
+  // Bucket is private — use signed URL (valid for 1 hour)
+  const { data: urlData, error: urlError } = await supabase.storage
+    .from(PHOTOS_BUCKET)
+    .createSignedUrl(data.path, 3600);
 
-  return { url: publicUrl, path: data.path };
+  if (urlError) throw urlError;
+
+  return { path: data.path, signedUrl: urlData.signedUrl };
+}
+
+export async function getSignedPhotoUrl(
+  path: string,
+  expiresInSeconds: number = 3600
+): Promise<string> {
+  const supabase = createBrowserSupabaseClient();
+  const { data, error } = await supabase.storage
+    .from(PHOTOS_BUCKET)
+    .createSignedUrl(path, expiresInSeconds);
+
+  if (error) throw error;
+  return data.signedUrl;
+}
+
+export async function getSignedPhotoUrls(
+  paths: string[],
+  expiresInSeconds: number = 3600
+): Promise<{ path: string; signedUrl: string }[]> {
+  const supabase = createBrowserSupabaseClient();
+  const { data, error } = await supabase.storage
+    .from(PHOTOS_BUCKET)
+    .createSignedUrls(paths, expiresInSeconds);
+
+  if (error) throw error;
+  return (data ?? [])
+    .filter((item) => item.signedUrl != null)
+    .map((item) => ({
+      path: item.path ?? "",
+      signedUrl: item.signedUrl!,
+    }));
 }
 
 export async function deleteFrogPhoto(path: string): Promise<void> {
@@ -37,10 +74,19 @@ export async function deleteFrogPhoto(path: string): Promise<void> {
   if (error) throw error;
 }
 
-export function getPhotoPublicUrl(path: string): string {
+export async function listOrgPhotos(
+  organizationId: string,
+  subfolder?: string
+): Promise<string[]> {
   const supabase = createBrowserSupabaseClient();
-  const {
-    data: { publicUrl },
-  } = supabase.storage.from(PHOTOS_BUCKET).getPublicUrl(path);
-  return publicUrl;
+  const prefix = subfolder
+    ? `${organizationId}/${subfolder}`
+    : organizationId;
+
+  const { data, error } = await supabase.storage
+    .from(PHOTOS_BUCKET)
+    .list(prefix);
+
+  if (error) throw error;
+  return (data ?? []).map((f) => `${prefix}/${f.name}`);
 }

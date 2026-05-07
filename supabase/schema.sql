@@ -316,6 +316,22 @@ create table if not exists notification_events (
 );
 
 -- ============================================================
+-- User Legal Acceptances (TOS / Privacy tracking)
+-- ============================================================
+
+create table if not exists user_legal_acceptances (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null,
+  terms_version text not null,
+  privacy_version text not null,
+  accepted_at timestamptz not null default now(),
+  ip_address text,
+  user_agent text
+);
+
+create index if not exists idx_legal_user on user_legal_acceptances(user_id);
+
+-- ============================================================
 -- Indexes for common queries
 -- ============================================================
 
