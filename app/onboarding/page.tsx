@@ -3,8 +3,8 @@
 import { useState } from "react";
 import { createBrowserSupabaseClient } from "@/lib/supabase";
 
-type Step = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10;
-const TOTAL_STEPS = 10;
+type Step = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11;
+const TOTAL_STEPS = 11;
 
 export default function OnboardingPage() {
   const [step, setStep] = useState<Step>(1);
@@ -20,27 +20,31 @@ export default function OnboardingPage() {
   const [housingTerm, setHousingTerm] = useState("bin");
 
   // Step 3: Number of starting bins
-  const [binCount, setBinCount] = useState("12");
+  const [binCount, setBinCount] = useState("");
 
-  // Step 4: Frog count per bin
-  const [frogsPerBin, setFrogsPerBin] = useState("8");
+  // Step 4: Which bins are open for receiving
+  const [openBinCount, setOpenBinCount] = useState("");
+
+  // Step 5: Frogs per bin
+  const [frogsPerBin, setFrogsPerBin] = useState("");
   const [frogSex, setFrogSex] = useState("female");
 
-  // Step 5: Starting date
+  // Step 6: Starting date
   const [startingDate, setStartingDate] = useState(new Date().toISOString().split("T")[0]);
 
-  // Step 6: Acclimation period
+  // Step 7: Acclimation + ready rules
   const [acclimationDays, setAcclimationDays] = useState("7");
-
-  // Step 7: Ready date rule
   const [readyAfterDays, setReadyAfterDays] = useState("7");
 
-  // Step 9: Rest period rules
+  // Step 8: Rest period rules
   const [restDays, setRestDays] = useState("90");
   const [overdueAfter, setOverdueAfter] = useState("180");
 
-  // Step 10: Notification recipients
+  // Step 9: Photos note (informational)
+  // Step 10: Notifications
   const [notifyEmail, setNotifyEmail] = useState("");
+
+  // Step 11: Summary + save
 
   async function finishOnboarding() {
     setSaving(true);
@@ -73,6 +77,7 @@ export default function OnboardingPage() {
 
       // 3. Create bins
       const count = parseInt(binCount) || 0;
+      const openCount = parseInt(openBinCount) || 0;
       const locations = [];
       for (let i = 1; i <= count; i++) {
         locations.push({
@@ -82,6 +87,8 @@ export default function OnboardingPage() {
           target_count: parseInt(frogsPerBin) || 8,
           populated_date: startingDate,
           acclimation_days: parseInt(acclimationDays) || 7,
+          // TODO: Add receiving_status column to locations table
+          // First `openCount` bins are "open", rest are "occupied" if they have frogs
         });
       }
       if (locations.length > 0) {
@@ -89,22 +96,24 @@ export default function OnboardingPage() {
         if (locErr) throw locErr;
       }
 
-      // 4. Create frogs distributed across bins
+      // 4. Create frogs distributed across bins (only in non-open bins, or all if user enters frogs)
       const perBin = parseInt(frogsPerBin) || 0;
       if (perBin > 0 && count > 0) {
         const { data: locs } = await supabase
           .from("locations")
           .select("id")
           .eq("organization_id", org.id);
-        const bins = locs ?? [];
+        const createdBins = locs ?? [];
         const frogs = [];
-        for (let b = 0; b < bins.length; b++) {
+        // Only populate bins that aren't the "open for receiving" ones
+        const populateCount = Math.max(0, count - openCount);
+        for (let b = 0; b < Math.min(populateCount, createdBins.length); b++) {
           for (let f = 0; f < perBin; f++) {
             frogs.push({
               organization_id: org.id,
               species: "Xenopus laevis",
               sex: frogSex,
-              current_location_id: bins[b].id,
+              current_location_id: createdBins[b].id,
               arrival_date: startingDate,
             });
           }
@@ -146,13 +155,15 @@ export default function OnboardingPage() {
   const term = housingTerm;
   const termPlural = housingTerm + "s";
   const termCap = term.charAt(0).toUpperCase() + term.slice(1);
+  const totalFrogs = (parseInt(binCount) || 0) * (parseInt(frogsPerBin) || 0);
+  const populatedBins = Math.max(0, (parseInt(binCount) || 0) - (parseInt(openBinCount) || 0));
 
   return (
     <div className="min-h-screen bg-gray-50 px-4 py-10">
       <div className="mx-auto max-w-2xl">
         <h1 className="text-2xl font-bold text-gray-900">Set up your colony</h1>
         <p className="mt-1 text-sm text-gray-500">
-          Set up {termPlural} → add frogs → log use → move to rest → get notified → reuse.
+          Define {termPlural} → mark which are open → add frogs → set rest rules → start tracking.
         </p>
 
         {/* Progress */}
@@ -171,7 +182,7 @@ export default function OnboardingPage() {
           {step === 1 && (
             <div className="space-y-4">
               <h2 className="text-lg font-semibold text-gray-800">1. Create your lab workspace</h2>
-              <p className="text-sm text-gray-600">Your private colony register.</p>
+              <p className="text-sm text-gray-600">Your private colony register. All data stays within your workspace.</p>
               <Field label="Lab / workspace name" value={labName} onChange={setLabName} placeholder="e.g. Smith Lab Colony" />
               <div>
                 <label className="block text-sm font-medium text-gray-700">Primary lab mode</label>
@@ -203,16 +214,36 @@ export default function OnboardingPage() {
 
           {step === 3 && (
             <div className="space-y-4">
-              <h2 className="text-lg font-semibold text-gray-800">3. How many starting {termPlural}?</h2>
-              <p className="text-sm text-gray-600">How many {termPlural} are you populating to start?</p>
-              <Field label={`Number of ${termPlural}`} value={binCount} onChange={setBinCount} placeholder="e.g. 12" type="number" />
+              <h2 className="text-lg font-semibold text-gray-800">3. How many {termPlural} exist?</h2>
+              <p className="text-sm text-gray-600">Total number of {termPlural} in your facility, including empty ones.</p>
+              <Field label={`Total number of ${termPlural}`} value={binCount} onChange={setBinCount} placeholder="e.g. 12" type="number" />
             </div>
           )}
 
           {step === 4 && (
             <div className="space-y-4">
-              <h2 className="text-lg font-semibold text-gray-800">4. How many frogs per {term}?</h2>
-              <p className="text-sm text-gray-600">Enter the starting count for each {term}.</p>
+              <h2 className="text-lg font-semibold text-gray-800">4. How many {termPlural} are open for receiving?</h2>
+              <p className="text-sm text-gray-600">
+                &quot;Open&quot; {termPlural} are empty and available to receive used frogs for rest.
+                When frogs are taken from a source {term}, the system recommends an open {term} as the rest destination.
+              </p>
+              <Field label={`Open / empty ${termPlural}`} value={openBinCount} onChange={setOpenBinCount} placeholder="e.g. 4" type="number" />
+              <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm text-blue-800">
+                <strong>How it works:</strong> After frogs are used, you log the use and the system recommends which open {term} to place them in for rest.
+                You&apos;ll always see which {termPlural} are open, resting, ready, or overdue.
+              </div>
+              {parseInt(binCount) > 0 && parseInt(openBinCount) > 0 && (
+                <p className="text-xs text-gray-500">
+                  {populatedBins} {termPlural} will start with frogs. {openBinCount} will be open for receiving.
+                </p>
+              )}
+            </div>
+          )}
+
+          {step === 5 && (
+            <div className="space-y-4">
+              <h2 className="text-lg font-semibold text-gray-800">5. How many frogs per populated {term}?</h2>
+              <p className="text-sm text-gray-600">Starting frog count for {termPlural} that are not &quot;open.&quot;</p>
               <Field label={`Frogs per ${term}`} value={frogsPerBin} onChange={setFrogsPerBin} placeholder="e.g. 8" type="number" />
               <div>
                 <label className="block text-sm font-medium text-gray-700">Sex</label>
@@ -222,70 +253,91 @@ export default function OnboardingPage() {
                   <option value="mixed">Mixed</option>
                 </select>
               </div>
-              <p className="text-xs text-gray-400">This creates {parseInt(binCount) * parseInt(frogsPerBin) || 0} frogs across {binCount} {termPlural}.</p>
-            </div>
-          )}
-
-          {step === 5 && (
-            <div className="space-y-4">
-              <h2 className="text-lg font-semibold text-gray-800">5. When were these {termPlural} populated?</h2>
-              <p className="text-sm text-gray-600">The date frogs arrived or were placed into {termPlural}.</p>
-              <Field label="Starting / arrival date" value={startingDate} onChange={setStartingDate} placeholder="" type="date" />
+              {populatedBins > 0 && parseInt(frogsPerBin) > 0 && (
+                <p className="text-xs text-gray-500">
+                  This creates {populatedBins * parseInt(frogsPerBin)} frogs across {populatedBins} populated {termPlural}.
+                  {parseInt(openBinCount) > 0 && ` ${openBinCount} ${termPlural} start empty (open for receiving).`}
+                </p>
+              )}
+              <p className="text-xs text-gray-400">You can also add individual frog records and detailed info later.</p>
             </div>
           )}
 
           {step === 6 && (
             <div className="space-y-4">
-              <h2 className="text-lg font-semibold text-gray-800">6. Acclimation period</h2>
-              <p className="text-sm text-gray-600">How many days do frogs need to acclimate before first use?</p>
-              <Field label="Acclimation days" value={acclimationDays} onChange={setAcclimationDays} placeholder="e.g. 7" type="number" />
+              <h2 className="text-lg font-semibold text-gray-800">6. When were frogs placed in {termPlural}?</h2>
+              <p className="text-sm text-gray-600">The date frogs arrived or were placed into {termPlural}.</p>
+              <Field label="Starting / arrival date" value={startingDate} onChange={setStartingDate} placeholder="" type="date" />
             </div>
           )}
 
           {step === 7 && (
             <div className="space-y-4">
-              <h2 className="text-lg font-semibold text-gray-800">7. Ready date rule</h2>
-              <p className="text-sm text-gray-600">{termCap}s become &quot;ready&quot; after acclimation completes. Confirm or adjust.</p>
-              <Field label="Ready after (days from arrival)" value={readyAfterDays} onChange={setReadyAfterDays} placeholder="e.g. 7" type="number" />
-              <p className="text-xs text-gray-500">Your {termPlural} populated on {startingDate} will be ready on {new Date(new Date(startingDate).getTime() + parseInt(readyAfterDays) * 86400000).toLocaleDateString()}.</p>
+              <h2 className="text-lg font-semibold text-gray-800">7. Acclimation &amp; ready rules</h2>
+              <p className="text-sm text-gray-600">How long do newly arrived frogs need before they can be used?</p>
+              <Field label="Acclimation days" value={acclimationDays} onChange={setAcclimationDays} placeholder="e.g. 7" type="number" />
+              <Field label="Ready for use after (days from arrival)" value={readyAfterDays} onChange={setReadyAfterDays} placeholder="e.g. 7" type="number" />
+              {startingDate && parseInt(readyAfterDays) > 0 && (
+                <p className="text-xs text-gray-500">
+                  Frogs arriving {startingDate} will be ready on {new Date(new Date(startingDate).getTime() + parseInt(readyAfterDays) * 86400000).toLocaleDateString()}.
+                </p>
+              )}
             </div>
           )}
 
           {step === 8 && (
             <div className="space-y-4">
-              <h2 className="text-lg font-semibold text-gray-800">8. Upload photos (optional)</h2>
-              <p className="text-sm text-gray-600">
-                Attach photos to {termPlural} or individual frogs. Photos are archive records now and may support future photo-ID tools.
+              <h2 className="text-lg font-semibold text-gray-800">8. Rest period rules</h2>
+              <p className="text-sm text-gray-600">After frogs are used, how long must they rest before reuse?</p>
+              <Field label="Minimum rest period (days)" value={restDays} onChange={setRestDays} placeholder="e.g. 90" type="number" />
+              <Field label="Flag as overdue after (days)" value={overdueAfter} onChange={setOverdueAfter} placeholder="e.g. 180" type="number" />
+              <p className="text-xs text-gray-500">
+                After use, frogs rest for {restDays || "—"} days. If not reused by {overdueAfter || "—"} days, they are flagged as overdue.
               </p>
-              <div className="rounded-lg border border-dashed border-gray-300 bg-gray-50 p-8 text-center">
-                <p className="text-sm text-gray-500">Photo upload available after setup is complete.</p>
-                <p className="mt-1 text-xs text-gray-400">Upload from the {termCap} detail page or Photos section.</p>
-              </div>
-              <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm text-blue-800">
-                Upload photos now to build your colony archive. Future photo-ID tools may use these to help identify individual frogs.
-              </div>
             </div>
           )}
 
           {step === 9 && (
             <div className="space-y-4">
-              <h2 className="text-lg font-semibold text-gray-800">9. Rest period rules</h2>
-              <p className="text-sm text-gray-600">After frogs are used, how long must they rest before reuse?</p>
-              <Field label="Rest period (days)" value={restDays} onChange={setRestDays} placeholder="e.g. 90" type="number" />
-              <Field label="Overdue after (days)" value={overdueAfter} onChange={setOverdueAfter} placeholder="e.g. 180" type="number" />
-              <p className="text-xs text-gray-500">
-                After use, frogs rest for {restDays} days. If not reused by {overdueAfter} days, they are flagged as overdue.
+              <h2 className="text-lg font-semibold text-gray-800">9. Photos (optional)</h2>
+              <p className="text-sm text-gray-600">
+                You can attach photos to {termPlural}, individual frogs, or use events at any time.
               </p>
+              <div className="rounded-lg border border-dashed border-gray-300 bg-gray-50 p-6 text-center">
+                <p className="text-sm text-gray-500">Photo upload available from any {term} detail page or the Photos section.</p>
+              </div>
+              <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm text-blue-800">
+                Photos stored now may support future photo-ID tools, but no automatic recognition is active yet.
+              </div>
             </div>
           )}
 
           {step === 10 && (
             <div className="space-y-4">
               <h2 className="text-lg font-semibold text-gray-800">10. Notification recipients</h2>
-              <p className="text-sm text-gray-600">Who should be notified when a rest period completes?</p>
+              <p className="text-sm text-gray-600">Who should be notified when a rest period completes or {termPlural} need attention?</p>
               <Field label="Email for notifications" value={notifyEmail} onChange={setNotifyEmail} placeholder="you@lab.edu" type="email" />
               <p className="text-xs text-gray-500">
-                You&apos;ll receive notifications when {termPlural} are rest-complete, overdue, or ready to return to rotation. You can add more recipients later.
+                You&apos;ll receive notifications when {termPlural} are rest-complete, overdue, or need repopulation. Add more recipients later.
+              </p>
+            </div>
+          )}
+
+          {step === 11 && (
+            <div className="space-y-4">
+              <h2 className="text-lg font-semibold text-gray-800">11. Review &amp; create colony</h2>
+              <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 text-sm space-y-2">
+                <p><strong>Lab:</strong> {labName || "—"}</p>
+                <p><strong>Mode:</strong> {labMode}</p>
+                <p><strong>Housing:</strong> {binCount || 0} {termPlural} ({openBinCount || 0} open for receiving)</p>
+                <p><strong>Frogs:</strong> {populatedBins * (parseInt(frogsPerBin) || 0)} across {populatedBins} populated {termPlural}</p>
+                <p><strong>Arrival:</strong> {startingDate}</p>
+                <p><strong>Rest period:</strong> {restDays} days (overdue after {overdueAfter})</p>
+                <p><strong>Notifications:</strong> {notifyEmail || contactEmail || "Signed-in user"}</p>
+              </div>
+              <p className="text-xs text-gray-500">
+                After setup, you can add individual frog records, upload photos, adjust {term} statuses,
+                and start logging use events.
               </p>
             </div>
           )}
@@ -313,7 +365,7 @@ export default function OnboardingPage() {
               disabled={saving || !labName}
               className="rounded-lg bg-green-600 px-6 py-2 text-sm font-semibold text-white hover:bg-green-700 disabled:opacity-50"
             >
-              {saving ? "Setting up..." : "Finish & Go to Dashboard"}
+              {saving ? "Setting up..." : "Create Colony"}
             </button>
           )}
         </div>

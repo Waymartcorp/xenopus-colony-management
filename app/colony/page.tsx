@@ -1,196 +1,167 @@
-// TODO: Fetch all bins and frogs grouped by room/rack from Supabase
-// TODO: Add filters by status, location, lab mode, date, performance
-// TODO: Add visual rack/bin layout view (future)
+"use client";
 
-const MOCK_COLONY = {
-  totalFrogs: 187,
-  totalBins: 24,
-  rooms: [
-    {
-      name: "Room A",
-      racks: [
-        {
-          name: "Rack 1",
-          bins: [
-            { label: "Bin 1", status: "resting", frogs: 8, target: 8, days: 67 },
-            { label: "Bin 2", status: "resting", frogs: 8, target: 8, days: 45 },
-            { label: "Bin 3", status: "resting", frogs: 8, target: 8, days: 78 },
-            { label: "Bin 4", status: "resting", frogs: 7, target: 8, days: 55 },
-            { label: "Bin 5", status: "recently_used", frogs: 8, target: 8, days: 2 },
-            { label: "Bin 6", status: "rest_complete", frogs: 8, target: 8, days: 112 },
-            { label: "Bin 7", status: "resting", frogs: 8, target: 8, days: 41 },
-            { label: "Bin 8", status: "rest_complete", frogs: 7, target: 8, days: 107 },
-          ],
-        },
-        {
-          name: "Rack 2",
-          bins: [
-            { label: "Bin 1", status: "resting", frogs: 8, target: 8, days: 88 },
-            { label: "Bin 2", status: "resting", frogs: 8, target: 8, days: 72 },
-            { label: "Bin 3", status: "needs_repopulation", frogs: 3, target: 8, days: null },
-            { label: "Bin 4", status: "resting", frogs: 8, target: 8, days: 36 },
-            { label: "Bin 5", status: "resting", frogs: 8, target: 8, days: 59 },
-            { label: "Bin 6", status: "resting", frogs: 8, target: 8, days: 64 },
-            { label: "Bin 7", status: "resting", frogs: 8, target: 8, days: 53 },
-            { label: "Bin 8", status: "resting", frogs: 8, target: 8, days: 48 },
-          ],
-        },
-      ],
-    },
-    {
-      name: "Room B",
-      racks: [
-        {
-          name: "Rack 3",
-          bins: [
-            { label: "Bin 1", status: "overdue", frogs: 8, target: 8, days: 142 },
-            { label: "Bin 2", status: "resting", frogs: 8, target: 8, days: 81 },
-            { label: "Bin 3", status: "resting", frogs: 8, target: 8, days: 60 },
-            { label: "Bin 4", status: "resting", frogs: 7, target: 8, days: 44 },
-          ],
-        },
-        {
-          name: "Rack 4",
-          bins: [
-            { label: "Bin 1", status: "resting", frogs: 8, target: 8, days: 70 },
-            { label: "Bin 2", status: "rest_complete", frogs: 8, target: 8, days: 105 },
-            { label: "Bin 3", status: "resting", frogs: 8, target: 8, days: 55 },
-            { label: "Bin 4", status: "resting", frogs: 8, target: 8, days: 32 },
-          ],
-        },
-      ],
-    },
-    {
-      name: "Room C",
-      racks: [
-        {
-          name: "GP Tank",
-          bins: [
-            { label: "Tank 1", status: "general_population", frogs: 45, target: 50, days: null },
-            { label: "Tank 2", status: "general_population", frogs: 38, target: 50, days: null },
-          ],
-        },
-      ],
-    },
-  ],
-  statusSummary: {
-    rest_complete: 3,
-    overdue: 1,
-    needs_repopulation: 1,
-    resting: 15,
-    recently_used: 1,
-    general_population: 2,
-    scheduled_next: 1,
-  },
-};
+import { useEffect, useState } from "react";
+import { createBrowserSupabaseClient } from "@/lib/supabase";
 
-const STATUS_COLORS: Record<string, string> = {
-  rest_complete: "bg-green-500",
-  overdue: "bg-red-500",
-  needs_repopulation: "bg-yellow-500",
-  resting: "bg-blue-400",
-  recently_used: "bg-blue-300",
-  general_population: "bg-gray-400",
-  scheduled_next: "bg-brand-500",
-};
+// TODO: Query bin_cycle_status for real rest/ready/overdue counts
+// TODO: Performance notes from frog_events
+// TODO: Next-to-use logic based on rest-complete dates
 
-const STATUS_LABELS: Record<string, string> = {
-  rest_complete: "Rest Complete",
-  overdue: "Overdue",
-  needs_repopulation: "Needs Repopulation",
-  resting: "Resting",
-  recently_used: "Recently Used",
-  general_population: "General Population",
-  scheduled_next: "Scheduled Next",
-};
+interface BinSummary {
+  id: string;
+  name: string;
+  room: string | null;
+  frog_count: number;
+  target_count: number;
+  status: string;
+}
 
 export default function ColonyPage() {
+  const [bins, setBins] = useState<BinSummary[]>([]);
+  const [totalFrogs, setTotalFrogs] = useState(0);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function load() {
+      const supabase = createBrowserSupabaseClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: mem } = await supabase
+        .from("organization_memberships")
+        .select("organization_id")
+        .eq("user_id", user.id)
+        .limit(1)
+        .single();
+      if (!mem) { setLoading(false); return; }
+
+      const { data: locs } = await supabase
+        .from("locations")
+        .select("id, name, room, target_count")
+        .eq("organization_id", mem.organization_id)
+        .order("name");
+
+      if (locs) {
+        const binData: BinSummary[] = [];
+        let total = 0;
+        for (const loc of locs) {
+          const { count } = await supabase
+            .from("frogs")
+            .select("*", { count: "exact", head: true })
+            .eq("current_location_id", loc.id);
+          const fc = count ?? 0;
+          total += fc;
+          binData.push({
+            id: loc.id,
+            name: loc.name,
+            room: loc.room,
+            frog_count: fc,
+            target_count: loc.target_count ?? 8,
+            status: fc === 0 ? "open" : "occupied",
+            // TODO: Derive actual status from bin_cycle_status
+          });
+        }
+        setBins(binData);
+        setTotalFrogs(total);
+      }
+      setLoading(false);
+    }
+    load();
+  }, []);
+
+  if (loading) {
+    return <div className="p-6"><p className="text-sm text-gray-500">Loading colony...</p></div>;
+  }
+
+  if (bins.length === 0) {
+    return (
+      <div className="p-6 lg:p-10">
+        <h1 className="page-header">Whole Colony View</h1>
+        <div className="mt-8 rounded-xl border-2 border-dashed border-gray-200 bg-white p-10 text-center">
+          <h2 className="text-lg font-semibold text-gray-900">No colony defined yet</h2>
+          <p className="mt-2 text-sm text-gray-600">
+            Set up your bins, add frogs, and start tracking the colony.
+          </p>
+          <a href="/onboarding" className="btn-primary mt-4 inline-block">Set up colony</a>
+        </div>
+      </div>
+    );
+  }
+
+  const openBins = bins.filter((b) => b.status === "open");
+  const occupiedBins = bins.filter((b) => b.status === "occupied");
+
+  // Group by room
+  const rooms = Array.from(new Set(bins.map((b) => b.room || "Uncategorized")));
+
   return (
     <div className="p-6 lg:p-10">
-      <div className="flex items-center justify-between">
+      <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Whole Colony</h1>
-          <p className="mt-1 text-sm text-gray-500">
-            All bins grouped by room and rack. {MOCK_COLONY.totalFrogs} frogs
-            across {MOCK_COLONY.totalBins} bins.
-          </p>
+          <h1 className="page-header">Whole Colony View</h1>
+          <p className="page-subtitle">{bins.length} bins · {totalFrogs} frogs</p>
         </div>
-        <div className="flex gap-2">
-          <a
-            href="/bins"
-            className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
-          >
-            Table View
-          </a>
-        </div>
+        <a href="/use" className="btn-primary">Log Use &amp; Rest</a>
       </div>
 
-      {/* Status legend */}
-      <div className="mt-6 flex flex-wrap gap-3">
-        {Object.entries(MOCK_COLONY.statusSummary).map(([status, count]) => (
-          <span key={status} className="inline-flex items-center gap-1.5 text-xs text-gray-600">
-            <span className={`inline-block h-3 w-3 rounded-sm ${STATUS_COLORS[status] ?? "bg-gray-300"}`} />
-            {STATUS_LABELS[status] ?? status} ({count})
-          </span>
-        ))}
+      {/* Stats */}
+      <div className="mt-6 grid gap-4 sm:grid-cols-4">
+        <StatTile label="Total Bins" value={bins.length} />
+        <StatTile label="Total Frogs" value={totalFrogs} />
+        <StatTile label="Open (receiving)" value={openBins.length} />
+        <StatTile label="Occupied" value={occupiedBins.length} />
       </div>
 
-      {/* TODO: Add filters: status, room, performance, date */}
-
-      {/* Room / Rack / Bin grid */}
-      <div className="mt-8 space-y-8">
-        {MOCK_COLONY.rooms.map((room) => (
-          <section key={room.name}>
-            <h2 className="text-lg font-semibold text-gray-800">{room.name}</h2>
-            <div className="mt-3 space-y-4">
-              {room.racks.map((rack) => (
-                <div key={rack.name} className="rounded-xl border border-gray-200 bg-white p-4">
-                  <h3 className="text-sm font-semibold text-gray-700">{rack.name}</h3>
-                  <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-8">
-                    {rack.bins.map((bin) => (
-                      <a
-                        key={bin.label}
-                        href="/bins"
-                        className="group rounded-lg border border-gray-100 p-2 text-center hover:border-brand-300 hover:bg-brand-50"
-                      >
-                        <div className={`mx-auto h-2 w-full rounded-full ${STATUS_COLORS[bin.status] ?? "bg-gray-300"}`} />
-                        <p className="mt-1.5 text-xs font-semibold text-gray-700 group-hover:text-brand-700">
-                          {bin.label}
-                        </p>
-                        <p className="text-xs text-gray-400">
-                          {bin.frogs}/{bin.target}
-                        </p>
-                        {bin.days != null && (
-                          <p className="text-xs text-gray-400">{bin.days}d</p>
-                        )}
-                      </a>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-        ))}
+      {/* Grouped by room */}
+      <div className="mt-8 space-y-6">
+        {rooms.map((room) => {
+          const roomBins = bins.filter((b) => (b.room || "Uncategorized") === room);
+          return (
+            <section key={room}>
+              <h2 className="section-title">{room}</h2>
+              <div className="mt-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                {roomBins.map((bin) => (
+                  <a key={bin.id} href={`/bins/${bin.id}`} className="card-flat flex items-center justify-between px-4 py-3 hover:shadow-card-hover transition-shadow">
+                    <div>
+                      <p className="text-sm font-semibold text-gray-900">{bin.name}</p>
+                      <p className="text-xs text-gray-500">{bin.frog_count}/{bin.target_count} frogs</p>
+                    </div>
+                    <StatusBadge status={bin.status} />
+                  </a>
+                ))}
+              </div>
+            </section>
+          );
+        })}
       </div>
 
-      {/* Quick actions */}
-      <section className="mt-8 rounded-xl border border-gray-200 bg-white p-5">
-        <h2 className="text-sm font-semibold text-gray-700">Quick Summary</h2>
-        <div className="mt-3 grid gap-4 sm:grid-cols-3 text-sm text-gray-600">
-          <div>
-            <p className="font-semibold text-gray-900">Next bins to use</p>
-            <p>Rack 1 / Bin 6 (112d), Rack 1 / Bin 8 (107d), Rack 4 / Bin 2 (105d)</p>
-          </div>
-          <div>
-            <p className="font-semibold text-gray-900">Need repopulation</p>
-            <p>Rack 2 / Bin 3 (3/8 frogs)</p>
-          </div>
-          <div>
-            <p className="font-semibold text-gray-900">General population</p>
-            <p>GP Tank 1 (45 frogs), GP Tank 2 (38 frogs)</p>
-          </div>
-        </div>
-      </section>
+      {/* Context notes */}
+      <div className="mt-10 space-y-2 text-center text-xs text-gray-400">
+        <p>Resting, ready, and overdue statuses will appear once use/rest events are logged.</p>
+        <p>Photos stored now may support future photo-ID tools, but no automatic recognition is active yet.</p>
+      </div>
     </div>
   );
+}
+
+function StatTile({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="rounded-xl border border-gray-200 bg-white p-4">
+      <p className="text-xs font-medium text-gray-500">{label}</p>
+      <p className="mt-1 text-2xl font-bold text-gray-900">{value}</p>
+    </div>
+  );
+}
+
+function StatusBadge({ status }: { status: string }) {
+  const cfg: Record<string, { label: string; cls: string }> = {
+    open: { label: "Open", cls: "bg-green-100 text-green-700" },
+    occupied: { label: "Occupied", cls: "bg-blue-100 text-blue-700" },
+    resting: { label: "Resting", cls: "bg-blue-100 text-blue-600" },
+    ready: { label: "Ready", cls: "bg-green-100 text-green-700" },
+    overdue: { label: "Overdue", cls: "bg-red-100 text-red-700" },
+    needs_repop: { label: "Needs Repop", cls: "bg-yellow-100 text-yellow-700" },
+  };
+  const s = cfg[status] ?? cfg.occupied;
+  return <span className={`status-badge ${s.cls}`}>{s.label}</span>;
 }
