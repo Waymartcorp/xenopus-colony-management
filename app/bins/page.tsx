@@ -3,15 +3,11 @@
 import { useEffect, useState } from "react";
 import { createBrowserSupabaseClient } from "@/lib/supabase";
 
-// TODO: Query bin_cycle_status for rest timers, ready dates
-// TODO: Add receiving_status to locations table (open, occupied, resting, closed, gp_source, ready, needs_repop)
-
 interface Bin {
   id: string;
-  name: string;
-  room: string | null;
+  label: string;
   location_type: string;
-  target_count: number;
+  capacity: number;
   frog_count: number;
   receiving_status: string;
 }
@@ -47,12 +43,11 @@ export default function BinsPage() {
 
       const { data: locs } = await supabase
         .from("locations")
-        .select("id, name, room, location_type, target_count")
+        .select("id, label, location_type, capacity, status, notes")
         .eq("organization_id", mem.organization_id)
-        .order("name");
+        .order("label");
 
       if (locs && locs.length > 0) {
-        // Get frog counts per location
         const binData: Bin[] = [];
         for (const loc of locs) {
           const { count } = await supabase
@@ -60,11 +55,21 @@ export default function BinsPage() {
             .select("*", { count: "exact", head: true })
             .eq("current_location_id", loc.id);
 
+          const fc = count ?? 0;
+          const cap = loc.capacity ?? 8;
+          // Derive status: if notes indicate special status, use it
+          let receivingStatus = fc === 0 ? "open" : "occupied";
+          if (loc.notes === "open_for_receiving") receivingStatus = "open";
+          else if (loc.notes === "gp_source") receivingStatus = "gp_source";
+          if (loc.status === "inactive") receivingStatus = "closed";
+
           binData.push({
-            ...loc,
-            frog_count: count ?? 0,
-            receiving_status: (count ?? 0) === 0 ? "open" : "occupied",
-            // TODO: Derive from bin_cycle_status once events exist
+            id: loc.id,
+            label: loc.label,
+            location_type: loc.location_type,
+            capacity: cap,
+            frog_count: fc,
+            receiving_status: receivingStatus,
           });
         }
         setBins(binData);
@@ -78,7 +83,6 @@ export default function BinsPage() {
     return <div className="p-6"><p className="text-sm text-gray-500">Loading bins...</p></div>;
   }
 
-  // Empty state
   if (bins.length === 0) {
     return (
       <div className="p-6 lg:p-10">
@@ -101,7 +105,6 @@ export default function BinsPage() {
   }
 
   const openBins = bins.filter((b) => b.receiving_status === "open");
-  const occupiedBins = bins.filter((b) => b.receiving_status !== "open");
 
   return (
     <div className="p-6 lg:p-10">
@@ -128,13 +131,12 @@ export default function BinsPage() {
                   {bin.frog_count}
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-gray-900">{bin.name}</p>
-                  {bin.room && <p className="text-xs text-gray-500">{bin.room}</p>}
+                  <p className="text-sm font-semibold text-gray-900">{bin.label}</p>
                 </div>
               </div>
               <div className="flex items-center gap-3">
                 <span className="font-mono text-xs text-gray-400">
-                  {bin.frog_count}/{bin.target_count}
+                  {bin.frog_count}/{bin.capacity}
                 </span>
                 <span className={`status-badge ${status.color}`}>
                   {status.label}
@@ -146,7 +148,7 @@ export default function BinsPage() {
         })}
       </div>
 
-      {occupiedBins.length > 0 && openBins.length === 0 && (
+      {bins.length > 0 && openBins.length === 0 && (
         <div className="mt-6 rounded-lg border border-yellow-200 bg-yellow-50 p-4 text-sm text-yellow-800">
           No bins are marked as open for receiving. When frogs are used, you&apos;ll need an open bin to receive them for rest.
         </div>

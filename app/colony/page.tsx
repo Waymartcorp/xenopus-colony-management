@@ -3,16 +3,11 @@
 import { useEffect, useState } from "react";
 import { createBrowserSupabaseClient } from "@/lib/supabase";
 
-// TODO: Query bin_cycle_status for real rest/ready/overdue counts
-// TODO: Performance notes from frog_events
-// TODO: Next-to-use logic based on rest-complete dates
-
 interface BinSummary {
   id: string;
-  name: string;
-  room: string | null;
+  label: string;
   frog_count: number;
-  target_count: number;
+  capacity: number;
   status: string;
 }
 
@@ -37,9 +32,9 @@ export default function ColonyPage() {
 
       const { data: locs } = await supabase
         .from("locations")
-        .select("id, name, room, target_count")
+        .select("id, label, capacity, status, notes")
         .eq("organization_id", mem.organization_id)
-        .order("name");
+        .order("label");
 
       if (locs) {
         const binData: BinSummary[] = [];
@@ -51,14 +46,18 @@ export default function ColonyPage() {
             .eq("current_location_id", loc.id);
           const fc = count ?? 0;
           total += fc;
+
+          let displayStatus = fc === 0 ? "open" : "occupied";
+          if (loc.notes === "open_for_receiving") displayStatus = "open";
+          else if (loc.notes === "gp_source") displayStatus = "gp_source";
+          if (loc.status === "inactive") displayStatus = "closed";
+
           binData.push({
             id: loc.id,
-            name: loc.name,
-            room: loc.room,
+            label: loc.label,
             frog_count: fc,
-            target_count: loc.target_count ?? 8,
-            status: fc === 0 ? "open" : "occupied",
-            // TODO: Derive actual status from bin_cycle_status
+            capacity: loc.capacity ?? 8,
+            status: displayStatus,
           });
         }
         setBins(binData);
@@ -90,9 +89,7 @@ export default function ColonyPage() {
 
   const openBins = bins.filter((b) => b.status === "open");
   const occupiedBins = bins.filter((b) => b.status === "occupied");
-
-  // Group by room
-  const rooms = Array.from(new Set(bins.map((b) => b.room || "Uncategorized")));
+  const gpBins = bins.filter((b) => b.status === "gp_source");
 
   return (
     <div className="p-6 lg:p-10">
@@ -105,34 +102,25 @@ export default function ColonyPage() {
       </div>
 
       {/* Stats */}
-      <div className="mt-6 grid gap-4 sm:grid-cols-4">
+      <div className="mt-6 grid gap-4 sm:grid-cols-5">
         <StatTile label="Total Bins" value={bins.length} />
         <StatTile label="Total Frogs" value={totalFrogs} />
         <StatTile label="Open (receiving)" value={openBins.length} />
         <StatTile label="Occupied" value={occupiedBins.length} />
+        <StatTile label="GP Source" value={gpBins.length} />
       </div>
 
-      {/* Grouped by room */}
-      <div className="mt-8 space-y-6">
-        {rooms.map((room) => {
-          const roomBins = bins.filter((b) => (b.room || "Uncategorized") === room);
-          return (
-            <section key={room}>
-              <h2 className="section-title">{room}</h2>
-              <div className="mt-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                {roomBins.map((bin) => (
-                  <a key={bin.id} href={`/bins/${bin.id}`} className="card-flat flex items-center justify-between px-4 py-3 hover:shadow-card-hover transition-shadow">
-                    <div>
-                      <p className="text-sm font-semibold text-gray-900">{bin.name}</p>
-                      <p className="text-xs text-gray-500">{bin.frog_count}/{bin.target_count} frogs</p>
-                    </div>
-                    <StatusBadge status={bin.status} />
-                  </a>
-                ))}
-              </div>
-            </section>
-          );
-        })}
+      {/* All bins */}
+      <div className="mt-8 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+        {bins.map((bin) => (
+          <a key={bin.id} href={`/bins/${bin.id}`} className="card-flat flex items-center justify-between px-4 py-3 hover:shadow-card-hover transition-shadow">
+            <div>
+              <p className="text-sm font-semibold text-gray-900">{bin.label}</p>
+              <p className="text-xs text-gray-500">{bin.frog_count}/{bin.capacity} frogs</p>
+            </div>
+            <StatusBadge status={bin.status} />
+          </a>
+        ))}
       </div>
 
       {/* Context notes */}
@@ -160,7 +148,8 @@ function StatusBadge({ status }: { status: string }) {
     resting: { label: "Resting", cls: "bg-blue-100 text-blue-600" },
     ready: { label: "Ready", cls: "bg-green-100 text-green-700" },
     overdue: { label: "Overdue", cls: "bg-red-100 text-red-700" },
-    needs_repop: { label: "Needs Repop", cls: "bg-yellow-100 text-yellow-700" },
+    gp_source: { label: "GP Source", cls: "bg-purple-100 text-purple-700" },
+    closed: { label: "Closed", cls: "bg-gray-100 text-gray-600" },
   };
   const s = cfg[status] ?? cfg.occupied;
   return <span className={`status-badge ${s.cls}`}>{s.label}</span>;

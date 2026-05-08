@@ -3,24 +3,21 @@
 import { useEffect, useState } from "react";
 import { createBrowserSupabaseClient } from "@/lib/supabase";
 
-// TODO: Query bin_cycle_status for rest timer / ready date
-// TODO: Fetch performance_ratings for this bin
-// TODO: Fetch frog_events history for this bin
-
 interface BinDetail {
   id: string;
-  name: string;
-  room: string | null;
-  target_count: number;
+  label: string;
+  capacity: number;
   frog_count: number;
   location_type: string;
+  status: string;
+  notes: string | null;
 }
 
 interface FrogRow {
   id: string;
-  species: string;
+  public_code: string;
   sex: string | null;
-  identifier_code: string | null;
+  status: string;
 }
 
 export default function BinDetailPage({
@@ -44,7 +41,7 @@ export default function BinDetailPage({
 
       const { data: loc } = await supabase
         .from("locations")
-        .select("id, name, room, target_count, location_type")
+        .select("id, label, capacity, location_type, status, notes")
         .eq("id", binId)
         .single();
 
@@ -52,9 +49,9 @@ export default function BinDetailPage({
 
       const { data: frogList, count } = await supabase
         .from("frogs")
-        .select("id, species, sex, identifier_code", { count: "exact" })
+        .select("id, public_code, sex, status", { count: "exact" })
         .eq("current_location_id", binId)
-        .order("identifier_code");
+        .order("public_code");
 
       setBin({ ...loc, frog_count: count ?? 0 });
       setFrogs(frogList ?? []);
@@ -76,7 +73,11 @@ export default function BinDetailPage({
     );
   }
 
-  const status = bin.frog_count === 0 ? "open" : "occupied";
+  // Derive display status
+  let displayStatus = "occupied";
+  if (bin.notes === "open_for_receiving" || bin.frog_count === 0) displayStatus = "open";
+  else if (bin.notes === "gp_source") displayStatus = "gp_source";
+  if (bin.status === "inactive") displayStatus = "closed";
 
   return (
     <div className="p-6 lg:p-10">
@@ -84,24 +85,24 @@ export default function BinDetailPage({
       <nav className="text-sm text-gray-500">
         <a href="/bins" className="hover:text-brand-600">Bins</a>
         <span className="mx-2">/</span>
-        <span className="text-gray-900">{bin.name}</span>
+        <span className="text-gray-900">{bin.label}</span>
       </nav>
 
       {/* Header */}
       <div className="mt-4 flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">{bin.name}</h1>
-          {bin.room && <p className="mt-1 text-sm text-gray-500">{bin.room}</p>}
+          <h1 className="text-2xl font-bold text-gray-900">{bin.label}</h1>
+          <p className="mt-1 text-sm text-gray-500">{bin.location_type}</p>
         </div>
-        <StatusBadge status={status} />
+        <StatusBadge status={displayStatus} />
       </div>
 
       {/* Stats */}
       <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <DetailStat label="Frogs" value={`${bin.frog_count} / ${bin.target_count}`} />
-        <DetailStat label="Status" value={status === "open" ? "Open (receiving)" : "Occupied"} />
+        <DetailStat label="Frogs" value={`${bin.frog_count} / ${bin.capacity ?? "—"}`} />
+        <DetailStat label="Status" value={statusLabel(displayStatus)} />
         <DetailStat label="Type" value={bin.location_type} />
-        <DetailStat label="Capacity Available" value={String(bin.target_count - bin.frog_count)} />
+        <DetailStat label="Capacity Available" value={String((bin.capacity ?? 0) - bin.frog_count)} />
       </div>
 
       {/* Actions */}
@@ -129,19 +130,19 @@ export default function BinDetailPage({
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-100 bg-gray-50 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                  <th className="px-4 py-3">ID</th>
-                  <th className="px-4 py-3">Species</th>
+                  <th className="px-4 py-3">Code</th>
                   <th className="px-4 py-3">Sex</th>
+                  <th className="px-4 py-3">Status</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {frogs.map((frog) => (
                   <tr key={frog.id} className="hover:bg-gray-50">
                     <td className="px-4 py-3 font-mono text-xs font-medium text-brand-600">
-                      {frog.identifier_code || frog.id.slice(0, 8)}
+                      {frog.public_code}
                     </td>
-                    <td className="px-4 py-3 text-gray-600">{frog.species}</td>
                     <td className="px-4 py-3 text-gray-600">{frog.sex || "—"}</td>
+                    <td className="px-4 py-3 text-gray-600">{frog.status || "active"}</td>
                   </tr>
                 ))}
               </tbody>
@@ -172,6 +173,18 @@ export default function BinDetailPage({
   );
 }
 
+function statusLabel(status: string): string {
+  const labels: Record<string, string> = {
+    open: "Open (receiving)",
+    occupied: "Occupied",
+    resting: "Resting",
+    ready: "Ready for Use",
+    gp_source: "GP Source",
+    closed: "Closed / Hold",
+  };
+  return labels[status] ?? status;
+}
+
 function DetailStat({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-lg border border-gray-200 bg-white p-4">
@@ -187,16 +200,12 @@ function StatusBadge({ status }: { status: string }) {
     occupied: "bg-blue-100 text-blue-700",
     resting: "bg-blue-100 text-blue-600",
     ready: "bg-green-100 text-green-700",
-  };
-  const labels: Record<string, string> = {
-    open: "Open (receiving)",
-    occupied: "Occupied",
-    resting: "Resting",
-    ready: "Ready for Use",
+    gp_source: "bg-purple-100 text-purple-700",
+    closed: "bg-gray-100 text-gray-600",
   };
   return (
     <span className={`rounded-full px-3 py-1 text-xs font-semibold ${styles[status] ?? styles.occupied}`}>
-      {labels[status] ?? status}
+      {statusLabel(status)}
     </span>
   );
 }

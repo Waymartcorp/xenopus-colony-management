@@ -3,17 +3,11 @@
 import { useEffect, useState } from "react";
 import { createBrowserSupabaseClient } from "@/lib/supabase";
 
-// TODO: Create frog_events records for use + transfer
-// TODO: Update frog current_location_id on transfer
-// TODO: Create/update bin_cycle_status with rest timer
-// TODO: Schedule notification for rest-complete date
-
 interface BinOption {
   id: string;
-  name: string;
-  room: string | null;
+  label: string;
   frog_count: number;
-  target_count: number;
+  capacity: number;
   receiving_status: string;
 }
 
@@ -53,32 +47,37 @@ export default function LogUsePage() {
       // Get rotation settings
       const { data: rot } = await supabase
         .from("rotation_settings")
-        .select("min_rest_days")
+        .select("minimum_rest_days")
         .eq("organization_id", mem.organization_id)
         .limit(1)
         .single();
-      if (rot) setRestDays(rot.min_rest_days ?? 90);
+      if (rot) setRestDays(rot.minimum_rest_days ?? 90);
 
       // Get bins with frog counts
       const { data: locs } = await supabase
         .from("locations")
-        .select("id, name, room, target_count")
+        .select("id, label, capacity, notes, status")
         .eq("organization_id", mem.organization_id)
-        .order("name");
+        .order("label");
 
       if (locs) {
         const binData: BinOption[] = [];
         for (const loc of locs) {
+          if (loc.status === "inactive") continue;
           const { count } = await supabase
             .from("frogs")
             .select("*", { count: "exact", head: true })
             .eq("current_location_id", loc.id);
           const fc = count ?? 0;
+          const cap = loc.capacity ?? 8;
+          let receivingStatus = fc === 0 ? "open" : "occupied";
+          if (loc.notes === "open_for_receiving") receivingStatus = "open";
           binData.push({
-            ...loc,
+            id: loc.id,
+            label: loc.label,
             frog_count: fc,
-            target_count: loc.target_count ?? 8,
-            receiving_status: fc === 0 ? "open" : fc < (loc.target_count ?? 8) ? "open" : "occupied",
+            capacity: cap,
+            receiving_status: receivingStatus,
           });
         }
         setBins(binData);
@@ -92,10 +91,15 @@ export default function LogUsePage() {
   const destBin = bins.find((b) => b.id === destBinId);
   const restCompleteDate = new Date(new Date(useDate).getTime() + restDays * 86400000).toLocaleDateString();
 
-  // Auto-recommend destination bin: open, has capacity, not the source bin
+  // Auto-recommend destination bin: open or has capacity, not the source bin
   const recommendedBins = bins
-    .filter((b) => b.id !== sourceBinId && b.frog_count < b.target_count)
-    .sort((a, b) => a.frog_count - b.frog_count);
+    .filter((b) => b.id !== sourceBinId && b.frog_count < b.capacity)
+    .sort((a, b) => {
+      // Prefer bins marked as "open" first, then by available capacity
+      if (a.receiving_status === "open" && b.receiving_status !== "open") return -1;
+      if (b.receiving_status === "open" && a.receiving_status !== "open") return 1;
+      return a.frog_count - b.frog_count;
+    });
   const recommended = recommendedBins[0];
 
   if (loading) {
@@ -126,9 +130,9 @@ export default function LogUsePage() {
               </div>
               <h1 className="mt-4 text-xl font-bold text-gray-900">Use Logged &amp; Transfer Complete</h1>
               <div className="mt-4 space-y-2 text-sm text-gray-700">
-                <p><strong>{frogCount} frogs</strong> taken from <strong>{sourceBin?.name}</strong> on <strong>{useDate}</strong> for <strong>{useType}</strong>.</p>
-                <p>{sourceBin && parseInt(frogCount) ? `${sourceBin.frog_count - parseInt(frogCount)} frogs remain in ${sourceBin.name}.` : ""}</p>
-                <p>Used frogs moved to <strong>{destBin?.name}</strong>.</p>
+                <p><strong>{frogCount} frogs</strong> taken from <strong>{sourceBin?.label}</strong> on <strong>{useDate}</strong> for <strong>{useType}</strong>.</p>
+                <p>{sourceBin && parseInt(frogCount) ? `${sourceBin.frog_count - parseInt(frogCount)} frogs remain in ${sourceBin.label}.` : ""}</p>
+                <p>Used frogs moved to <strong>{destBin?.label}</strong>.</p>
                 <p>Rest complete on <strong>{restCompleteDate}</strong> ({restDays} days).</p>
                 {notifyEmail && <p>Notifications scheduled for: {notifyEmail}</p>}
               </div>
@@ -175,10 +179,7 @@ export default function LogUsePage() {
                   <label key={b.id} className={`flex cursor-pointer items-center justify-between rounded-lg border p-3 transition-colors ${sourceBinId === b.id ? "border-brand-400 bg-brand-50" : "border-gray-200 hover:bg-gray-50"}`}>
                     <div className="flex items-center gap-3">
                       <input type="radio" name="source" checked={sourceBinId === b.id} onChange={() => setSourceBinId(b.id)} className="h-4 w-4" />
-                      <div>
-                        <span className="text-sm font-medium text-gray-700">{b.name}</span>
-                        {b.room && <span className="ml-2 text-xs text-gray-400">{b.room}</span>}
-                      </div>
+                      <span className="text-sm font-medium text-gray-700">{b.label}</span>
                     </div>
                     <span className="font-mono text-xs text-gray-500">{b.frog_count} frogs</span>
                   </label>
@@ -193,10 +194,10 @@ export default function LogUsePage() {
           {step === "count" && (
             <div className="space-y-4">
               <h2 className="text-lg font-semibold text-gray-800">2. How many frogs used?</h2>
-              <p className="text-sm text-gray-600">From {sourceBin?.name} ({sourceBin?.frog_count} available)</p>
+              <p className="text-sm text-gray-600">From {sourceBin?.label} ({sourceBin?.frog_count} available)</p>
               <input type="number" value={frogCount} onChange={(e) => setFrogCount(e.target.value)} min="1" max={sourceBin?.frog_count} placeholder="Number of frogs" className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm" />
               {sourceBin && frogCount && parseInt(frogCount) > 0 && (
-                <p className="text-xs text-gray-500">{sourceBin.frog_count - parseInt(frogCount)} will remain in {sourceBin.name}</p>
+                <p className="text-xs text-gray-500">{sourceBin.frog_count - parseInt(frogCount)} will remain in {sourceBin.label}</p>
               )}
             </div>
           )}
@@ -238,9 +239,9 @@ export default function LogUsePage() {
                   <p className="text-xs font-semibold uppercase tracking-wider text-brand-600">Recommended</p>
                   <div className="mt-1 flex items-center justify-between">
                     <div>
-                      <p className="font-semibold text-gray-900">{recommended.name}</p>
+                      <p className="font-semibold text-gray-900">{recommended.label}</p>
                       <p className="text-xs text-gray-500">
-                        Open · capacity: {recommended.target_count - recommended.frog_count} spots available
+                        {recommended.receiving_status === "open" ? "Open" : "Available"} · capacity: {recommended.capacity - recommended.frog_count} spots
                       </p>
                     </div>
                     <button
@@ -259,9 +260,9 @@ export default function LogUsePage() {
                   <label key={b.id} className={`flex cursor-pointer items-center justify-between rounded-lg border p-3 transition-colors ${destBinId === b.id ? "border-brand-400 bg-brand-50" : "border-gray-200 hover:bg-gray-50"}`}>
                     <div className="flex items-center gap-3">
                       <input type="radio" name="dest" checked={destBinId === b.id} onChange={() => setDestBinId(b.id)} className="h-4 w-4" />
-                      <span className="text-sm font-medium text-gray-700">{b.name}</span>
+                      <span className="text-sm font-medium text-gray-700">{b.label}</span>
                     </div>
-                    <span className="font-mono text-xs text-gray-500">{b.frog_count}/{b.target_count}</span>
+                    <span className="font-mono text-xs text-gray-500">{b.frog_count}/{b.capacity}</span>
                   </label>
                 ))}
               </div>
@@ -277,12 +278,12 @@ export default function LogUsePage() {
             <div className="space-y-4">
               <h2 className="text-lg font-semibold text-gray-800">6. Confirm</h2>
               <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 text-sm space-y-2">
-                <p><strong>Source:</strong> {sourceBin?.name}</p>
+                <p><strong>Source:</strong> {sourceBin?.label}</p>
                 <p><strong>Frogs used:</strong> {frogCount} (remaining: {sourceBin ? sourceBin.frog_count - parseInt(frogCount || "0") : 0})</p>
                 <p><strong>Use type:</strong> {useType}</p>
                 <p><strong>Date:</strong> {useDate}</p>
                 {performanceNote && <p><strong>Performance:</strong> {performanceNote}</p>}
-                <p><strong>Destination:</strong> {destBin?.name}</p>
+                <p><strong>Destination:</strong> {destBin?.label}</p>
                 <p><strong>Rest complete:</strong> {restCompleteDate} ({restDays} days)</p>
                 {notifyEmail && <p><strong>Notify:</strong> {notifyEmail}</p>}
               </div>

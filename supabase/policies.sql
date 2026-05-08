@@ -108,8 +108,19 @@ create policy "membership_select" on public.organization_memberships
   for select using (public.is_org_member(organization_id));
 
 create policy "membership_insert" on public.organization_memberships
-  for insert with check (public.org_role_level(organization_id) >= 3);
-  -- admin+ can add members
+  for insert with check (
+    public.org_role_level(organization_id) >= 3
+    or (
+      -- Allow a user to create their own owner membership for a brand-new org
+      -- (no existing members yet). This solves the chicken-and-egg bootstrapping problem.
+      user_id = auth.uid()
+      and role = 'owner'
+      and not exists (
+        select 1 from public.organization_memberships m
+        where m.organization_id = organization_memberships.organization_id
+      )
+    )
+  );
 
 create policy "membership_update" on public.organization_memberships
   for update using (public.org_role_level(organization_id) >= 3);
