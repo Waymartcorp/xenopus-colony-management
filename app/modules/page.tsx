@@ -55,7 +55,7 @@ export default function ModulesPage() {
             ]}
           />
           <AddonCard
-            title="Frog Sentinel"
+            title="Frog Sentinel — Husbandry"
             status="Coming soon"
             description="Husbandry companion for labs that want deeper colony care tracking alongside their standard rotation workflow."
             features={[
@@ -64,6 +64,19 @@ export default function ModulesPage() {
               "Environmental notes (temperature, pH, water quality)",
               "Care alerts and recovery tracking",
               "Performance/husbandry correlations",
+            ]}
+          />
+          <AddonCard
+            title="Frog Sentinel — Camera Monitoring"
+            status="Future"
+            description="Optional room-monitoring tools for light-cycle checks, entry/motion events, feeding observation, and timestamped clips or frames. Not active in the base product."
+            features={[
+              "Low-cost camera setup for colony rooms",
+              "Room entry and motion detection events",
+              "Light/dark cycle observation logging",
+              "Short clip capture → static frames (saves storage)",
+              "Timestamped events linked to colony data",
+              "All media private to your organization",
             ]}
           />
           <AddonCard

@@ -245,21 +245,39 @@ export default function OnboardingPage() {
   const openBins = bins.filter((b) => b.status === "open");
   const totalFrogs = bins.reduce((sum, b) => sum + (b.status !== "open" && b.status !== "closed" ? b.startingFrogs : 0), 0);
 
+  const STEP_LABELS = ["Lab", "Housing", "Configure", "Frogs", "Date", "Rest rules", "Notify", "Review"];
+
   return (
     <div className="min-h-screen bg-gray-50 px-4 py-10">
-      <div className="mx-auto max-w-3xl">
-        <h1 className="text-2xl font-bold text-gray-900">Set up your colony</h1>
-        <p className="mt-1 text-sm text-gray-500">
-          Define {termPlural} → name them → assign frogs → set rules → start tracking.
-        </p>
+      {/* Subtle background pattern */}
+      <div className="pattern-dots fixed inset-0 pointer-events-none opacity-40" />
 
-        {/* Progress */}
-        <div className="mt-6 flex gap-0.5">
+      <div className="relative mx-auto max-w-3xl">
+        {/* Header */}
+        <div className="flex items-center gap-3">
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-600">
+            <svg width="16" height="16" viewBox="0 0 14 14" fill="none"><rect x="1" y="1" width="5" height="5" rx="1" fill="white" opacity="0.9"/><rect x="8" y="1" width="5" height="5" rx="1" fill="white" opacity="0.5"/><rect x="1" y="8" width="5" height="5" rx="1" fill="white" opacity="0.5"/><rect x="8" y="8" width="5" height="5" rx="1" fill="white" opacity="0.9"/></svg>
+          </div>
+          <div>
+            <h1 className="text-xl font-bold text-gray-900">Set up your colony</h1>
+            <p className="text-xs text-gray-500">
+              Define {termPlural} → assign frogs → set rules → start tracking
+            </p>
+          </div>
+        </div>
+
+        {/* Step indicator */}
+        <div className="mt-6 flex items-center gap-1">
           {Array.from({ length: TOTAL_STEPS }, (_, i) => (
-            <div key={i} className={`h-1.5 flex-1 rounded-full ${step > i ? "bg-brand-500" : "bg-gray-200"}`} />
+            <div key={i} className="flex flex-1 flex-col items-center gap-1">
+              <div className={`h-1.5 w-full rounded-full transition-colors ${step > i ? "bg-brand-500" : step === i + 1 ? "bg-brand-300" : "bg-gray-200"}`} />
+              <span className={`hidden sm:block text-[10px] font-medium ${step === i + 1 ? "text-brand-600" : "text-gray-400"}`}>
+                {STEP_LABELS[i]}
+              </span>
+            </div>
           ))}
         </div>
-        <p className="mt-2 text-xs text-gray-400">Step {step} of {TOTAL_STEPS}</p>
+        <p className="mt-1 text-xs text-gray-400 sm:hidden">Step {step}: {STEP_LABELS[step - 1]}</p>
 
         {error && (
           <div className="mt-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">

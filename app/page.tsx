@@ -6,7 +6,12 @@ export default function HomePage() {
       {/* Nav */}
       <header className="sticky top-0 z-50 border-b border-gray-100 bg-white/80 backdrop-blur-md">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <span className="text-lg font-bold tracking-tight text-brand-700">XenoTrack</span>
+          <div className="flex items-center gap-2">
+            <div className="flex h-7 w-7 items-center justify-center rounded-md bg-brand-600">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1" y="1" width="5" height="5" rx="1" fill="white" opacity="0.9"/><rect x="8" y="1" width="5" height="5" rx="1" fill="white" opacity="0.5"/><rect x="1" y="8" width="5" height="5" rx="1" fill="white" opacity="0.5"/><rect x="8" y="8" width="5" height="5" rx="1" fill="white" opacity="0.9"/></svg>
+            </div>
+            <span className="text-lg font-bold tracking-tight text-gray-900">XenoTrack</span>
+          </div>
           <div className="flex items-center gap-3">
             <Link href="/login" className="text-sm font-medium text-gray-600 transition-colors hover:text-gray-900">
               Log in
@@ -20,18 +25,24 @@ export default function HomePage() {
 
       {/* Hero */}
       <section className="relative overflow-hidden">
+        {/* Abstract background: subtle grid + radial glow */}
         <div className="pattern-grid absolute inset-0" />
+        <div className="absolute left-1/2 top-0 -translate-x-1/2 h-[600px] w-[900px] rounded-full bg-gradient-to-b from-brand-100/40 to-transparent blur-3xl" />
+
         <div className="relative mx-auto max-w-5xl px-6 py-24 text-center sm:py-32">
           <div className="animate-in">
-            <p className="text-sm font-semibold uppercase tracking-widest text-brand-600">
-              Colony Register
-            </p>
-            <h1 className="mt-4 text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl lg:text-6xl">
-              Track bins, frogs, and<br className="hidden sm:block" /> use/rest cycles in one place
+            <div className="mx-auto mb-6 flex items-center justify-center gap-1.5">
+              {/* Mini bin icons suggesting colony structure */}
+              {[0.4, 0.7, 1, 0.7, 0.4].map((opacity, i) => (
+                <div key={i} className="h-3 w-3 rounded-sm bg-brand-500 transition-transform hover:scale-125" style={{ opacity }} />
+              ))}
+            </div>
+            <h1 className="text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl lg:text-6xl">
+              Your colony, organized<br className="hidden sm:block" /> around the bin-cycling loop
             </h1>
             <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-gray-600">
-              XenoTrack is a private Xenopus colony register. Know what&apos;s ready,
-              what&apos;s resting, and what needs attention — without losing
+              XenoTrack is a private Xenopus colony register. Define bins, track frogs,
+              log use, manage rest periods, and know exactly what&apos;s ready — without losing
               institutional knowledge.
             </p>
           </div>
@@ -42,92 +53,111 @@ export default function HomePage() {
             <Link href="/login" className="btn-secondary px-7 py-3.5 text-base">
               Log In
             </Link>
-            <a href="#how" className="rounded-lg px-6 py-3.5 text-sm font-semibold text-brand-600 transition-colors hover:text-brand-800">
-              How it works ↓
-            </a>
           </div>
         </div>
       </section>
 
-      {/* Flow diagram */}
-      <section id="how" className="border-t border-gray-100 bg-gray-50 py-20">
+      {/* Visual workflow */}
+      <section id="how" className="border-t border-gray-100 bg-gray-50/80 py-20">
         <div className="mx-auto max-w-5xl px-6">
           <h2 className="text-center text-2xl font-bold tracking-tight text-gray-900">
-            The bin-cycling loop
+            One loop, the entire colony
           </h2>
-          <p className="mx-auto mt-3 max-w-lg text-center text-gray-600">
-            One simple workflow, repeated across your colony.
+          <p className="mx-auto mt-3 max-w-lg text-center text-sm text-gray-600">
+            Set up once. Then repeat the use/rest cycle as long as you need.
           </p>
-          <div className="mt-12 flex flex-wrap items-center justify-center gap-3 sm:gap-0">
-            <FlowNode label="Set up bins" step={1} />
-            <FlowArrow />
-            <FlowNode label="Add frogs" step={2} />
-            <FlowArrow />
-            <FlowNode label="Log use" step={3} />
-            <FlowArrow />
-            <FlowNode label="Move to rest" step={4} />
-            <FlowArrow />
-            <FlowNode label="Get notified" step={5} />
-            <FlowArrow />
-            <FlowNode label="Return to rotation" step={6} last />
+
+          {/* Circular flow graphic */}
+          <div className="relative mt-14">
+            {/* Connecting path — visible on sm+ */}
+            <div className="absolute left-0 right-0 top-[2.25rem] hidden h-0.5 sm:block">
+              <div className="mx-auto h-full max-w-3xl bg-gradient-to-r from-transparent via-brand-200 to-transparent" />
+            </div>
+
+            <div className="relative grid grid-cols-2 gap-6 sm:grid-cols-4 lg:grid-cols-7">
+              <WorkflowStep step={1} label="Define bins" icon={<BinIcon />} />
+              <WorkflowStep step={2} label="Add frogs" icon={<FrogIcon />} />
+              <WorkflowStep step={3} label="Log use" icon={<UseIcon />} />
+              <WorkflowStep step={4} label="Move to rest" icon={<RestIcon />} />
+              <WorkflowStep step={5} label="Start timer" icon={<TimerIcon />} />
+              <WorkflowStep step={6} label="Notify team" icon={<NotifyIcon />} />
+              <WorkflowStep step={7} label="Ready again" icon={<ReadyIcon />} active />
+            </div>
+
+            {/* Return arrow */}
+            <div className="mx-auto mt-6 hidden max-w-3xl sm:block">
+              <div className="flex items-center justify-center gap-2 text-xs text-brand-500">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M14 8H2M2 8L6 4M2 8L6 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                <span className="font-medium">Return to rotation</span>
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="rotate-180"><path d="M14 8H2M2 8L6 4M2 8L6 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Features */}
+      {/* Feature cards */}
       <section className="py-20">
         <div className="mx-auto max-w-5xl px-6">
           <h2 className="text-center text-2xl font-bold tracking-tight text-gray-900">
-            What XenoTrack does
+            Built for the way you already work
           </h2>
-          <p className="mx-auto mt-3 max-w-lg text-center text-gray-600">
-            A bin-centered colony register. Simple by default, powerful when you need it.
-          </p>
-          <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             <FeatureCard
-              icon="◫"
-              title="Track bins and frogs"
-              description="Organize your colony by bins. Every frog lives in a bin with a clear status: available, resting, or ready."
+              color="brand"
+              title="Bin-centered tracking"
+              description="Organize by bins. Every frog lives in a bin with a clear status: available, resting, or ready for use."
             />
             <FeatureCard
-              icon="↻"
-              title="Log use and move to rest"
-              description="Record which frogs were used, from which bin, and move them to a rest bin with an automatic timer."
+              color="blue"
+              title="Use → rest in one step"
+              description="Log use and the system recommends a destination bin. Linked records on both source and destination."
             />
             <FeatureCard
-              icon="◉"
-              title="Get notified when ready"
-              description="The system tells you which bins are ready, how many frogs are available, and what to do next."
+              color="green"
+              title="Automatic rest timers"
+              description="Rest period starts automatically. Get notified when bins are ready to return to rotation."
             />
             <FeatureCard
-              icon="◲"
-              title="Upload frog photos"
-              description="Build a photo archive for your colony. Attach photos to bins, frogs, or events."
+              color="purple"
+              title="Photo archive"
+              description="Attach photos to bins, frogs, or events. Future photo-ID tools may use your archive."
             />
             <FeatureCard
-              icon="◈"
-              title="Track performance"
+              color="amber"
+              title="Performance tracking"
               description="Log oocyte quality, extract yield, and use counts. See which bins perform best over time."
             />
             <FeatureCard
-              icon="⬡"
-              title="Forecast capacity"
+              color="teal"
+              title="Colony forecasting"
               description="Know when you'll run short. Capacity planning and repopulation guidance built in."
             />
           </div>
         </div>
       </section>
 
-      {/* History */}
-      <section className="border-t border-gray-100 bg-gray-50 py-20">
-        <div className="mx-auto max-w-3xl px-6 text-center">
-          <h2 className="text-2xl font-bold tracking-tight text-gray-900">
-            Build years of searchable colony history
+      {/* Status showcase */}
+      <section className="border-t border-gray-100 bg-gray-50/80 py-20">
+        <div className="mx-auto max-w-4xl px-6">
+          <h2 className="text-center text-2xl font-bold tracking-tight text-gray-900">
+            Always know where you stand
           </h2>
-          <p className="mt-4 text-lg text-gray-600">
-            Keep every bin and frog record in one place. Preserve knowledge
-            across technicians, lab managers, and projects. See what happened,
-            what is ready, and what is coming next.
+          <p className="mx-auto mt-3 max-w-lg text-center text-sm text-gray-600">
+            Each bin has a live status. Know what&apos;s ready, what&apos;s resting, and what needs attention.
+          </p>
+          <div className="mt-10 flex flex-wrap justify-center gap-3">
+            <StatusChip label="Ready for use" color="green" />
+            <StatusChip label="Resting (day 42/90)" color="blue" />
+            <StatusChip label="Open — receiving" color="emerald" />
+            <StatusChip label="Occupied" color="gray" />
+            <StatusChip label="Overdue" color="red" />
+            <StatusChip label="GP Source" color="purple" />
+            <StatusChip label="Needs repopulation" color="amber" />
+          </div>
+          <p className="mt-8 text-center text-sm text-gray-500">
+            Build years of searchable colony history. Preserve knowledge
+            across technicians, lab managers, and projects.
           </p>
         </div>
       </section>
@@ -161,35 +191,76 @@ export default function HomePage() {
   );
 }
 
-function FlowNode({ label, step, last }: { label: string; step: number; last?: boolean }) {
-  void last;
+/* Workflow step with icon */
+function WorkflowStep({ step, label, icon, active }: { step: number; label: string; icon: React.ReactNode; active?: boolean }) {
   return (
-    <div className="flex flex-col items-center gap-2">
-      <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-brand-300 bg-brand-50 text-sm font-bold text-brand-700">
-        {step}
+    <div className="group flex flex-col items-center gap-2 text-center">
+      <div className={`relative flex h-[4.5rem] w-[4.5rem] items-center justify-center rounded-2xl border-2 transition-all duration-300 group-hover:scale-105 group-hover:shadow-md ${active ? "border-brand-400 bg-brand-50 shadow-sm" : "border-gray-200 bg-white"}`}>
+        <div className={`${active ? "text-brand-600" : "text-gray-500 group-hover:text-brand-600"} transition-colors`}>
+          {icon}
+        </div>
+        <span className="absolute -top-2 -right-2 flex h-5 w-5 items-center justify-center rounded-full bg-brand-600 text-[10px] font-bold text-white">
+          {step}
+        </span>
       </div>
-      <p className="text-xs font-medium text-gray-700 whitespace-nowrap">{label}</p>
+      <p className="text-xs font-medium text-gray-700">{label}</p>
     </div>
   );
 }
 
-function FlowArrow() {
+function FeatureCard({ title, description, color }: { title: string; description: string; color: string }) {
+  const colors: Record<string, string> = {
+    brand: "border-l-brand-400",
+    blue: "border-l-blue-400",
+    green: "border-l-green-400",
+    purple: "border-l-purple-400",
+    amber: "border-l-amber-400",
+    teal: "border-l-teal-400",
+  };
   return (
-    <div className="hidden sm:flex items-center px-2">
-      <div className="h-0.5 w-6 bg-brand-200" />
-      <div className="h-0 w-0 border-y-[4px] border-l-[6px] border-y-transparent border-l-brand-300" />
-    </div>
-  );
-}
-
-function FeatureCard({ icon, title, description }: { icon: string; title: string; description: string }) {
-  return (
-    <div className="card p-6">
-      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-50 text-lg text-brand-600">
-        {icon}
-      </div>
-      <h3 className="mt-4 text-sm font-semibold text-gray-900">{title}</h3>
+    <div className={`card-flat border-l-4 p-5 transition-shadow hover:shadow-card-hover ${colors[color] ?? colors.brand}`}>
+      <h3 className="text-sm font-semibold text-gray-900">{title}</h3>
       <p className="mt-2 text-sm leading-relaxed text-gray-600">{description}</p>
     </div>
   );
+}
+
+function StatusChip({ label, color }: { label: string; color: string }) {
+  const colors: Record<string, string> = {
+    green: "bg-green-100 text-green-700 border-green-200",
+    blue: "bg-blue-100 text-blue-700 border-blue-200",
+    emerald: "bg-emerald-100 text-emerald-700 border-emerald-200",
+    gray: "bg-gray-100 text-gray-600 border-gray-200",
+    red: "bg-red-100 text-red-700 border-red-200",
+    purple: "bg-purple-100 text-purple-700 border-purple-200",
+    amber: "bg-amber-100 text-amber-700 border-amber-200",
+  };
+  return (
+    <span className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium ${colors[color] ?? colors.gray}`}>
+      {label}
+    </span>
+  );
+}
+
+/* SVG icons for workflow steps */
+function BinIcon() {
+  return <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="4" y="4" width="16" height="16" rx="3"/><line x1="4" y1="10" x2="20" y2="10"/><line x1="12" y1="4" x2="12" y2="10"/></svg>;
+}
+function FrogIcon() {
+  return <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="8"/><circle cx="9" cy="10" r="1.5" fill="currentColor"/><circle cx="15" cy="10" r="1.5" fill="currentColor"/><path d="M9 14c1.5 1.5 4.5 1.5 6 0"/></svg>;
+}
+function UseIcon() {
+  return <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14"/><circle cx="12" cy="12" r="9"/></svg>;
+}
+function RestIcon() {
+  return <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>;
+}
+function TimerIcon() {
+  return <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5"/><line x1="12" y1="2" x2="12" y2="4"/></svg>;
+}
+function NotifyIcon() {
+  return <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>;
+}
+function ReadyIcon() {
+  return <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5"/></svg>;
 }

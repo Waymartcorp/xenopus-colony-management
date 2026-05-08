@@ -584,7 +584,8 @@ create table if not exists organization_module_trials (
   organization_id uuid not null references organizations(id) on delete cascade,
   module_name text not null check (module_name in (
     'husbandry_tracking','feeding_schedule','environmental_notes',
-    'protocols_results','frog_social_bridge','visual_analytics','imaging_future'
+    'protocols_results','frog_social_bridge','visual_analytics','imaging_future',
+    'frog_sentinel_camera_monitoring'
   )),
   trial_started_at timestamptz not null default now(),
   trial_ends_at timestamptz not null default (now() + interval '90 days'),
@@ -614,3 +615,57 @@ create index if not exists idx_module_trials_org on organization_module_trials(o
 -- - organization_subscriptions table
 -- - module pricing tiers
 -- - trial expiration handling
+--
+-- ============================================================
+-- TODO: Frog Sentinel Camera Monitoring (future optional module)
+-- ============================================================
+-- Module key: frog_sentinel_camera_monitoring
+-- See docs/FROG_SENTINEL.md for full architecture notes.
+--
+-- camera_devices:
+-- - id uuid primary key
+-- - organization_id uuid references organizations(id)
+-- - location_id uuid references locations(id)
+-- - device_name text
+-- - device_type text (webcam / ip_camera / pi_camera / usb_capture / other)
+-- - connection_type text (local_network / usb / cloud / other)
+-- - status text (active / offline / paused / removed)
+-- - last_seen_at timestamptz
+-- - created_at timestamptz
+--
+-- camera_events:
+-- - id uuid primary key
+-- - organization_id uuid references organizations(id)
+-- - camera_device_id uuid references camera_devices(id)
+-- - location_id uuid references locations(id)
+-- - event_type text (motion / room_entry / light_change / feeding_observed / manual_capture / other)
+-- - event_started_at timestamptz
+-- - event_ended_at timestamptz
+-- - clip_url text
+-- - frame_set_url text
+-- - notes text
+-- - reviewed_by uuid
+-- - reviewed_at timestamptz
+-- - created_at timestamptz
+--
+-- camera_event_frames:
+-- - id uuid primary key
+-- - organization_id uuid references organizations(id)
+-- - camera_event_id uuid references camera_events(id)
+-- - image_url text
+-- - frame_timestamp timestamptz
+-- - frame_order integer
+-- - created_at timestamptz
+--
+-- room_monitoring_settings:
+-- - id uuid primary key
+-- - organization_id uuid references organizations(id)
+-- - location_id uuid references locations(id)
+-- - monitoring_enabled boolean default false
+-- - capture_mode text (live_feed / motion_clips / static_frames / manual_only)
+-- - frame_capture_count integer default 5
+-- - retention_days integer default 30
+-- - notify_on_motion boolean default false
+-- - notify_on_light_change boolean default false
+-- - notify_recipients jsonb
+-- - created_at timestamptz
