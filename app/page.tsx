@@ -25,21 +25,21 @@ export default function HomePage() {
 
       {/* Hero */}
       <section className="relative overflow-hidden">
-        {/* Animated background particles — always visible */}
+        {/* Animated background particles — bold and colorful */}
         <div className="pointer-events-none absolute inset-0">
-          {Array.from({ length: 20 }).map((_, i) => (
+          {Array.from({ length: 24 }).map((_, i) => (
             <div
               key={i}
               className="absolute rounded-full"
               style={{
-                width: `${6 + (i % 4) * 3}px`,
-                height: `${6 + (i % 4) * 3}px`,
-                background: ["#536f92", "#3d5577", "#cfae45", "#7690ad", "#6366f1", "#b8972e"][i % 6],
-                left: `${3 + (i * 5) % 94}%`,
-                top: `${8 + (i * 7) % 80}%`,
-                opacity: 0.15 + (i % 3) * 0.1,
-                animation: `float-particle ${3 + (i % 5) * 0.8}s ease-in-out infinite alternate`,
-                animationDelay: `${i * 0.2}s`,
+                width: `${7 + (i % 4) * 4}px`,
+                height: `${7 + (i % 4) * 4}px`,
+                background: ["#536f92", "#cfae45", "#7690ad", "#b8972e", "#4a6fa5", "#d4a937"][i % 6],
+                left: `${2 + (i * 4.3) % 93}%`,
+                top: `${6 + (i * 6.5) % 82}%`,
+                opacity: 0.25 + (i % 4) * 0.08,
+                animation: `float-particle ${2.5 + (i % 5) * 0.7}s ease-in-out infinite alternate`,
+                animationDelay: `${i * 0.18}s`,
               }}
             />
           ))}
@@ -303,46 +303,47 @@ function BinMovementGraphic() {
     <div className="relative mx-auto max-w-2xl rounded-2xl border border-gray-200/60 bg-white/70 p-6 shadow-lg backdrop-blur-sm">
       {/* Floating ambient particles */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-2xl">
-        {Array.from({ length: 10 }).map((_, i) => (
+        {Array.from({ length: 14 }).map((_, i) => (
           <div
             key={i}
             className="absolute rounded-full"
             style={{
-              width: `${3 + (i % 3) * 2}px`,
-              height: `${3 + (i % 3) * 2}px`,
-              background: ["#536f92", "#7690ad", "#cfae45", "#3d5577", "#b8972e"][i % 5],
-              left: `${8 + i * 9}%`,
-              top: `${15 + Math.sin(i * 1.1) * 25}%`,
-              opacity: 0.4,
-              animation: `float-particle ${2.5 + i * 0.4}s ease-in-out infinite alternate`,
-              animationDelay: `${i * 0.3}s`,
+              width: `${5 + (i % 3) * 3}px`,
+              height: `${5 + (i % 3) * 3}px`,
+              background: ["#536f92", "#cfae45", "#7690ad", "#b8972e", "#4a6fa5", "#d4a937"][i % 6],
+              left: `${6 + i * 6.5}%`,
+              top: `${12 + Math.sin(i * 1.2) * 30}%`,
+              opacity: 0.5,
+              animation: `float-particle ${2.2 + i * 0.35}s ease-in-out infinite alternate`,
+              animationDelay: `${i * 0.25}s`,
             }}
           />
         ))}
       </div>
 
-      <svg viewBox="0 0 570 180" className="relative w-full" style={{ maxHeight: "180px" }}>
-        {/* Arc paths between bins */}
+      <svg viewBox="0 0 570 200" className="relative w-full" style={{ maxHeight: "200px" }}>
+        {/* Arc paths between bins — high curves */}
         {arcs.map((arc, i) => {
           const midX = (arc.from + arc.to) / 2;
+          const curveY = 15 - i * 5;
           return (
             <g key={i}>
               <path
-                d={`M ${arc.from + 25} 90 Q ${midX} 30 ${arc.to - 25} 90`}
+                d={`M ${arc.from + 25} 100 Q ${midX} ${curveY} ${arc.to - 25} 100`}
                 fill="none"
                 stroke={arc.color}
                 strokeWidth="1.5"
-                strokeDasharray="4 3"
-                opacity="0.4"
+                strokeDasharray="5 4"
+                opacity="0.35"
               />
               {/* Traveling dots along arc */}
-              {[0, 1, 2].map((dotIdx) => (
-                <circle key={dotIdx} r="3.5" fill={arc.color} opacity="0.8">
+              {[0, 1, 2, 3].map((dotIdx) => (
+                <circle key={dotIdx} r={3 + (dotIdx % 2)} fill={arc.color} opacity={0.75 + dotIdx * 0.05}>
                   <animateMotion
-                    dur={`${2.2 + dotIdx * 0.3}s`}
+                    dur={`${2 + dotIdx * 0.4}s`}
                     repeatCount="indefinite"
-                    begin={`${arc.delay + dotIdx * 0.7}s`}
-                    path={`M ${arc.from + 25} 90 Q ${midX} 30 ${arc.to - 25} 90`}
+                    begin={`${arc.delay + dotIdx * 0.55}s`}
+                    path={`M ${arc.from + 25} 100 Q ${midX} ${curveY} ${arc.to - 25} 100`}
                   />
                 </circle>
               ))}
@@ -350,22 +351,22 @@ function BinMovementGraphic() {
           );
         })}
 
-        {/* Return arc (bottom, Ready → Populated) */}
+        {/* Return arc (bottom sweep, Ready → Populated) */}
         <path
-          d="M 510 110 Q 285 200 60 110"
+          d="M 510 120 C 430 190, 140 190, 60 120"
           fill="none"
           stroke="#b8972e"
           strokeWidth="1.5"
-          strokeDasharray="4 3"
+          strokeDasharray="5 4"
           opacity="0.3"
         />
-        {[0, 1].map((dotIdx) => (
-          <circle key={`ret-${dotIdx}`} r="3" fill="#b8972e" opacity="0.7">
+        {[0, 1, 2].map((dotIdx) => (
+          <circle key={`ret-${dotIdx}`} r={3 + (dotIdx % 2)} fill="#b8972e" opacity="0.7">
             <animateMotion
-              dur={`${3.5 + dotIdx * 0.5}s`}
+              dur={`${3.2 + dotIdx * 0.6}s`}
               repeatCount="indefinite"
-              begin={`${dotIdx * 1.5}s`}
-              path="M 510 110 Q 285 200 60 110"
+              begin={`${dotIdx * 1.1}s`}
+              path="M 510 120 C 430 190, 140 190, 60 120"
             />
           </circle>
         ))}
@@ -375,7 +376,7 @@ function BinMovementGraphic() {
           <g key={i}>
             <rect
               x={bin.x - 25}
-              y="65"
+              y="75"
               width="50"
               height="50"
               rx="10"
@@ -392,16 +393,16 @@ function BinMovementGraphic() {
                 <circle
                   key={d}
                   cx={bin.x - 12 + col * 12}
-                  cy={82 + row * 12}
+                  cy={92 + row * 12}
                   r="3.5"
                   fill={bin.fill}
                   opacity="0.85"
                 >
                   <animate
                     attributeName="opacity"
-                    values="0.85;0.5;0.85"
-                    dur={`${1.5 + d * 0.2}s`}
-                    begin={`${d * 0.3}s`}
+                    values="0.9;0.45;0.9"
+                    dur={`${1.4 + d * 0.2}s`}
+                    begin={`${d * 0.25}s`}
                     repeatCount="indefinite"
                   />
                 </circle>
@@ -409,7 +410,7 @@ function BinMovementGraphic() {
             })}
             <text
               x={bin.x}
-              y="138"
+              y="148"
               textAnchor="middle"
               fontSize="11"
               fontWeight="600"

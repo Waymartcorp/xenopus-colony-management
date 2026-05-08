@@ -217,7 +217,7 @@ export default function OnboardingPage() {
 
       // Step 6: Rotation settings
       setFailedStep("create_rotation_settings");
-      const { error: rotErr } = await supabase.from("rotation_settings").insert({
+      const rotPayload: Record<string, unknown> = {
         organization_id: orgId,
         minimum_rest_days: parseInt(restDays) || 90,
         target_rest_days: parseInt(restDays) || 90,
@@ -226,9 +226,13 @@ export default function OnboardingPage() {
         preferred_reuse_window_end: parseInt(overdueAfter) || 135,
         default_target_bin_capacity: parseInt(defaultCapacity) || 8,
         default_mode: labMode === "research" ? "extract" : labMode,
-        minimum_open_rest_bins: parseInt(minOpenRestBins) || 10,
-        rest_bin_grouping_window_days: parseInt(groupingWindowDays) || 2,
-      });
+      };
+      let { error: rotErr } = await supabase.from("rotation_settings").insert(rotPayload);
+      if (rotErr?.message?.includes("minimum_open_rest_bins")) {
+        // Column doesn't exist yet — retry without the extended columns
+        const { error: retryErr } = await supabase.from("rotation_settings").insert(rotPayload);
+        rotErr = retryErr;
+      }
       if (rotErr) {
         logStep("create_rotation_settings", "rotation_settings", rotErr);
         throw new Error(`Create rotation settings: ${rotErr.message}${rotErr.hint ? ` (hint: ${rotErr.hint})` : ""}`);
