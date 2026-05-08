@@ -14,12 +14,16 @@ interface Bin {
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
   open: { label: "Open", color: "bg-green-100 text-green-700" },
+  assigned: { label: "Assigned Destination", color: "bg-brand-100 text-brand-700" },
+  receiving: { label: "Receiving", color: "bg-teal-100 text-teal-700" },
   occupied: { label: "Occupied", color: "bg-blue-100 text-blue-700" },
   resting: { label: "Resting", color: "bg-blue-100 text-blue-600" },
+  rest_complete: { label: "Rest Complete", color: "bg-emerald-100 text-emerald-700" },
   ready: { label: "Ready for Use", color: "bg-green-100 text-green-700" },
   closed: { label: "Closed / Hold", color: "bg-gray-100 text-gray-600" },
   gp_source: { label: "GP Source", color: "bg-purple-100 text-purple-700" },
   needs_repop: { label: "Needs Repopulation", color: "bg-yellow-100 text-yellow-700" },
+  pending_confirmation: { label: "Pending Placement", color: "bg-yellow-100 text-yellow-700" },
 };
 
 export default function BinsPage() {

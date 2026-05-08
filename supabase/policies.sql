@@ -795,3 +795,39 @@ create policy "module_trials_update" on public.organization_module_trials
 
 create policy "module_trials_delete" on public.organization_module_trials
   for delete using (public.org_role_level(organization_id) >= 4);
+
+
+-- =============================================================================
+-- bin_transfer_events
+-- =============================================================================
+alter table public.bin_transfer_events enable row level security;
+
+create policy "bin_transfers_select" on public.bin_transfer_events
+  for select using (public.is_org_member(organization_id));
+
+create policy "bin_transfers_insert" on public.bin_transfer_events
+  for insert with check (public.org_role_level(organization_id) >= 1);
+
+create policy "bin_transfers_update" on public.bin_transfer_events
+  for update using (public.org_role_level(organization_id) >= 1);
+
+create policy "bin_transfers_delete" on public.bin_transfer_events
+  for delete using (public.org_role_level(organization_id) >= 3);
+
+
+-- =============================================================================
+-- destination_bin_assignments
+-- =============================================================================
+alter table public.destination_bin_assignments enable row level security;
+
+create policy "dest_assignments_select" on public.destination_bin_assignments
+  for select using (public.is_org_member(organization_id));
+
+create policy "dest_assignments_insert" on public.destination_bin_assignments
+  for insert with check (public.org_role_level(organization_id) >= 1);
+
+create policy "dest_assignments_update" on public.destination_bin_assignments
+  for update using (public.org_role_level(organization_id) >= 1);
+
+create policy "dest_assignments_delete" on public.destination_bin_assignments
+  for delete using (public.org_role_level(organization_id) >= 3);

@@ -51,6 +51,8 @@ export default function OnboardingPage() {
   // Step 6: Rest/rotation rules
   const [restDays, setRestDays] = useState("90");
   const [overdueAfter, setOverdueAfter] = useState("135");
+  const [minOpenRestBins, setMinOpenRestBins] = useState("10");
+  const [groupingWindowDays, setGroupingWindowDays] = useState("2");
 
   // Step 7: Notifications
   const [notifyEmail, setNotifyEmail] = useState("");
@@ -224,6 +226,8 @@ export default function OnboardingPage() {
         preferred_reuse_window_end: parseInt(overdueAfter) || 135,
         default_target_bin_capacity: parseInt(defaultCapacity) || 8,
         default_mode: labMode === "research" ? "extract" : labMode,
+        minimum_open_rest_bins: parseInt(minOpenRestBins) || 10,
+        rest_bin_grouping_window_days: parseInt(groupingWindowDays) || 2,
       });
       if (rotErr) {
         logStep("create_rotation_settings", "rotation_settings", rotErr);
@@ -458,6 +462,14 @@ export default function OnboardingPage() {
               <div className="rounded-lg bg-gray-50 p-3 text-sm text-gray-700">
                 <strong>{bins.length}</strong> {termPlural} — <strong>{populatedBins.length}</strong> populated, <strong>{openBins.length}</strong> open for receiving · <strong>{totalFrogs}</strong> starting frogs
               </div>
+
+              {/* Reserve-bin warning */}
+              {openBins.length < (parseInt(minOpenRestBins) || 10) && bins.length > 0 && (
+                <div className="rounded-lg border border-yellow-300 bg-yellow-50 p-3 text-sm text-yellow-800">
+                  <strong>Warning:</strong> XenoTrack recommends keeping at least {minOpenRestBins || 10} {termPlural} open for rest/receiving.
+                  Used frogs need destination {termPlural} after use. You currently have {openBins.length} open.
+                </div>
+              )}
             </div>
           )}
 
@@ -493,12 +505,16 @@ export default function OnboardingPage() {
           {/* Step 6: Rest/rotation rules */}
           {step === 6 && (
             <div className="space-y-4">
-              <h2 className="text-lg font-semibold text-gray-800">6. Rest period rules</h2>
+              <h2 className="text-lg font-semibold text-gray-800">6. Rest &amp; rotation rules</h2>
               <p className="text-sm text-gray-600">After frogs are used, how long must they rest before reuse?</p>
               <Field label="Minimum rest period (days)" value={restDays} onChange={setRestDays} placeholder="e.g. 90" type="number" />
               <Field label="Flag as overdue after (days)" value={overdueAfter} onChange={setOverdueAfter} placeholder="e.g. 135" type="number" />
+              <Field label="Minimum open rest bins (recommended)" value={minOpenRestBins} onChange={setMinOpenRestBins} placeholder="e.g. 10" type="number" />
+              <Field label="Rest-bin grouping window (days)" value={groupingWindowDays} onChange={setGroupingWindowDays} placeholder="e.g. 2" type="number" />
               <p className="text-xs text-gray-500">
-                After use, frogs rest for {restDays || "—"} days. If not reused by {overdueAfter || "—"} days, they are flagged.
+                Rest period: {restDays || "—"} days. Overdue after: {overdueAfter || "—"} days.
+                Keep at least {minOpenRestBins || 10} bins open for receiving.
+                Frogs from the same source bin used within {groupingWindowDays || 2} days may share a rest bin.
               </p>
             </div>
           )}

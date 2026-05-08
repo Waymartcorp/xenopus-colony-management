@@ -156,14 +156,11 @@ export default function BinDetailPage({
         )}
       </section>
 
-      {/* Event history */}
-      <section className="mt-8">
-        <h2 className="text-lg font-semibold text-gray-800">Use &amp; Event History</h2>
-        <div className="mt-3 rounded-xl border-2 border-dashed border-gray-200 bg-white p-6 text-center">
-          <p className="text-sm text-gray-500">No events recorded for this bin yet.</p>
-          <p className="mt-1 text-xs text-gray-400">Events will appear here after frogs are used or transferred.</p>
-        </div>
-      </section>
+      {/* Transfer history */}
+      <TransferHistory binId={binId} />
+
+      {/* Destination assignments */}
+      <DestinationAssignments binId={binId} />
 
       {/* Photo note */}
       <div className="mt-8 rounded-lg border border-gray-100 bg-gray-50 p-3 text-center text-xs text-gray-500">
@@ -207,5 +204,108 @@ function StatusBadge({ status }: { status: string }) {
     <span className={`rounded-full px-3 py-1 text-xs font-semibold ${styles[status] ?? styles.occupied}`}>
       {statusLabel(status)}
     </span>
+  );
+}
+
+function TransferHistory({ binId }: { binId: string }) {
+  const [transfers, setTransfers] = useState<{ id: string; frog_count: number; use_type: string; use_date: string; placement_status: string; rest_complete_at: string | null; performance_note: string | null; destination_location_id: string; source_location_id: string }[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!binId) return;
+    async function load() {
+      const supabase = createBrowserSupabaseClient();
+      // Get transfers where this bin is source OR destination
+      const { data } = await supabase
+        .from("bin_transfer_events")
+        .select("id, frog_count, use_type, use_date, placement_status, rest_complete_at, performance_note, destination_location_id, source_location_id")
+        .or(`source_location_id.eq.${binId},destination_location_id.eq.${binId}`)
+        .order("use_date", { ascending: false })
+        .limit(20);
+      setTransfers(data ?? []);
+      setLoading(false);
+    }
+    load();
+  }, [binId]);
+
+  if (loading) return null;
+
+  return (
+    <section className="mt-8">
+      <h2 className="text-lg font-semibold text-gray-800">Transfer History</h2>
+      {transfers.length > 0 ? (
+        <div className="mt-3 space-y-2">
+          {transfers.map((t) => {
+            const isSource = t.source_location_id === binId;
+            return (
+              <div key={t.id} className="flex items-start gap-3 rounded-lg border border-gray-100 bg-white px-4 py-3">
+                <span className={`mt-0.5 flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold ${isSource ? "bg-red-100 text-red-600" : "bg-green-100 text-green-600"}`}>
+                  {isSource ? "↑" : "↓"}
+                </span>
+                <div className="flex-1">
+                  <p className="text-sm text-gray-700">
+                    <strong>{t.frog_count} frogs</strong> {isSource ? "taken out" : "received"} — {t.use_type}
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    {t.use_date} · Status: {t.placement_status}
+                    {t.rest_complete_at && ` · Rest complete: ${new Date(t.rest_complete_at).toLocaleDateString()}`}
+                  </p>
+                  {t.performance_note && <p className="mt-1 text-xs text-gray-400">{t.performance_note}</p>}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      ) : (
+        <div className="mt-3 rounded-xl border-2 border-dashed border-gray-200 bg-white p-6 text-center">
+          <p className="text-sm text-gray-500">No transfers recorded for this bin yet.</p>
+          <p className="mt-1 text-xs text-gray-400">Events will appear here after frogs are used or transferred.</p>
+        </div>
+      )}
+    </section>
+  );
+}
+
+function DestinationAssignments({ binId }: { binId: string }) {
+  const [assignments, setAssignments] = useState<{ id: string; status: string; notification_status: string; confirmation_status: string; assigned_at: string; source_location_id: string }[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!binId) return;
+    async function load() {
+      const supabase = createBrowserSupabaseClient();
+      const { data } = await supabase
+        .from("destination_bin_assignments")
+        .select("id, status, notification_status, confirmation_status, assigned_at, source_location_id")
+        .eq("destination_location_id", binId)
+        .order("assigned_at", { ascending: false })
+        .limit(10);
+      setAssignments(data ?? []);
+      setLoading(false);
+    }
+    load();
+  }, [binId]);
+
+  if (loading || assignments.length === 0) return null;
+
+  return (
+    <section className="mt-6">
+      <h2 className="text-sm font-semibold text-gray-800">Destination Assignment</h2>
+      <div className="mt-2 space-y-2">
+        {assignments.map((a) => (
+          <div key={a.id} className="rounded-lg border border-brand-200 bg-brand-50 px-4 py-3 text-sm">
+            <div className="flex items-center justify-between">
+              <span className="font-medium text-brand-700">
+                {a.status === "assigned" ? "Assigned as destination" : a.status === "receiving" ? "Receiving frogs" : a.status === "resting" ? "Resting" : a.status}
+              </span>
+              <span className={`status-badge ${a.confirmation_status === "confirmed" ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"}`}>
+                {a.confirmation_status === "confirmed" ? "Confirmed" : "Pending confirmation"}
+              </span>
+            </div>
+            <p className="mt-1 text-xs text-gray-600">Assigned {new Date(a.assigned_at).toLocaleDateString()}</p>
+          </div>
+        ))}
+      </div>
+    </section>
   );
 }

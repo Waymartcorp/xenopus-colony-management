@@ -9,6 +9,14 @@ interface BinOption {
   frog_count: number;
   capacity: number;
   receiving_status: string;
+  notes: string | null;
+}
+
+interface RecentTransfer {
+  destination_location_id: string;
+  source_location_id: string;
+  use_date: string;
+  frog_count: number;
 }
 
 type Step = "source" | "count" | "type" | "date" | "destination" | "confirm" | "done";
@@ -18,7 +26,10 @@ export default function LogUsePage() {
   const [bins, setBins] = useState<BinOption[]>([]);
   const [orgId, setOrgId] = useState<string>("");
   const [restDays, setRestDays] = useState(90);
+  const [groupingWindowDays, setGroupingWindowDays] = useState(2);
+  const [recentTransfers, setRecentTransfers] = useState<RecentTransfer[]>([]);
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
 
   // Form state
   const [sourceBinId, setSourceBinId] = useState("");
@@ -47,13 +58,27 @@ export default function LogUsePage() {
       // Get rotation settings
       const { data: rot } = await supabase
         .from("rotation_settings")
-        .select("minimum_rest_days")
+        .select("minimum_rest_days, rest_bin_grouping_window_days")
         .eq("organization_id", mem.organization_id)
         .limit(1)
         .single();
-      if (rot) setRestDays(rot.minimum_rest_days ?? 90);
+      if (rot) {
+        setRestDays(rot.minimum_rest_days ?? 90);
+        setGroupingWindowDays(rot.rest_bin_grouping_window_days ?? 2);
+      }
 
-      // Get bins with frog counts
+      // Get recent transfers (for grouping logic)
+      const windowStart = new Date();
+      windowStart.setDate(windowStart.getDate() - (rot?.rest_bin_grouping_window_days ?? 2));
+      const { data: transfers } = await supabase
+        .from("bin_transfer_events")
+        .select("destination_location_id, source_location_id, use_date, frog_count")
+        .eq("organization_id", mem.organization_id)
+        .gte("use_date", windowStart.toISOString().split("T")[0])
+        .order("use_date", { ascending: false });
+      setRecentTransfers(transfers ?? []);
+
+      // Get bins
       const { data: locs } = await supabase
         .from("locations")
         .select("id, label, capacity, notes, status")
@@ -78,6 +103,7 @@ export default function LogUsePage() {
             frog_count: fc,
             capacity: cap,
             receiving_status: receivingStatus,
+            notes: loc.notes,
           });
         }
         setBins(binData);
@@ -89,18 +115,82 @@ export default function LogUsePage() {
 
   const sourceBin = bins.find((b) => b.id === sourceBinId);
   const destBin = bins.find((b) => b.id === destBinId);
-  const restCompleteDate = new Date(new Date(useDate).getTime() + restDays * 86400000).toLocaleDateString();
+  const restCompleteDate = new Date(new Date(useDate).getTime() + restDays * 86400000);
+  const restCompleteDateStr = restCompleteDate.toLocaleDateString();
 
-  // Auto-recommend destination bin: open or has capacity, not the source bin
-  const recommendedBins = bins
-    .filter((b) => b.id !== sourceBinId && b.frog_count < b.capacity)
-    .sort((a, b) => {
-      // Prefer bins marked as "open" first, then by available capacity
-      if (a.receiving_status === "open" && b.receiving_status !== "open") return -1;
-      if (b.receiving_status === "open" && a.receiving_status !== "open") return 1;
-      return a.frog_count - b.frog_count;
-    });
-  const recommended = recommendedBins[0];
+  // Grouping logic: check if same source bin was used recently and sent to a dest bin with capacity
+  const groupedTransfer = recentTransfers.find(
+    (t) => t.source_location_id === sourceBinId
+  );
+  const groupedDestBin = groupedTransfer
+    ? bins.find((b) => b.id === groupedTransfer.destination_location_id && b.frog_count < b.capacity)
+    : null;
+
+  // Recommendation priority:
+  // A. Same source bin → same dest bin within grouping window (if capacity)
+  // B. Best open receiving bin with capacity
+  // C. No bin available → warning
+  const openBinsWithCapacity = bins
+    .filter((b) => b.id !== sourceBinId && b.frog_count < b.capacity && (b.receiving_status === "open" || b.notes === "open_for_receiving"))
+    .sort((a, b) => a.frog_count - b.frog_count);
+
+  const recommended = groupedDestBin ?? openBinsWithCapacity[0] ?? null;
+  const noRestBinAvailable = !recommended && bins.filter((b) => b.id !== sourceBinId && b.frog_count < b.capacity).length === 0;
+
+  async function handleConfirm() {
+    if (!sourceBin || !destBin) return;
+    setSaving(true);
+
+    try {
+      const supabase = createBrowserSupabaseClient();
+      const { data: { user } } = await supabase.auth.getUser();
+
+      // Create bin_transfer_event
+      const { error: transferErr } = await supabase.from("bin_transfer_events").insert({
+        organization_id: orgId,
+        source_location_id: sourceBinId,
+        destination_location_id: destBinId,
+        frog_count: parseInt(frogCount),
+        use_type: useType,
+        use_date: useDate,
+        rest_started_at: new Date(useDate).toISOString(),
+        rest_complete_at: restCompleteDate.toISOString(),
+        grouping_window_days: groupingWindowDays,
+        grouped_with_transfer_id: groupedTransfer && destBinId === groupedTransfer.destination_location_id ? undefined : undefined,
+        placement_status: "assigned",
+        performance_note: performanceNote || null,
+        created_by: user?.id,
+      });
+
+      if (transferErr) {
+        console.error("[use] bin_transfer_events insert failed:", transferErr);
+      }
+
+      // Create destination_bin_assignment
+      const { error: assignErr } = await supabase.from("destination_bin_assignments").insert({
+        organization_id: orgId,
+        source_location_id: sourceBinId,
+        destination_location_id: destBinId,
+        status: "assigned",
+        notification_status: notifyEmail ? "queued" : "pending",
+        confirmation_status: "pending",
+      });
+
+      if (assignErr) {
+        console.error("[use] destination_bin_assignments insert failed:", assignErr);
+      }
+
+      // TODO: Create frog_events for the use
+      // TODO: Update frog current_location_id
+      // TODO: Queue notification if notifyEmail is set
+
+      setStep("done");
+    } catch (err) {
+      console.error("[use] unexpected error:", err);
+      setStep("done");
+    }
+    setSaving(false);
+  }
 
   if (loading) {
     return <div className="p-6"><p className="text-sm text-gray-500">Loading...</p></div>;
@@ -120,6 +210,7 @@ export default function LogUsePage() {
   }
 
   if (step === "done") {
+    const isGrouped = groupedTransfer && destBinId === groupedTransfer.destination_location_id;
     return (
       <div className="p-6 lg:p-10">
         <div className="mx-auto max-w-xl">
@@ -128,22 +219,36 @@ export default function LogUsePage() {
               <div className="flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
                 <span className="text-lg">✓</span>
               </div>
-              <h1 className="mt-4 text-xl font-bold text-gray-900">Use Logged &amp; Transfer Complete</h1>
+              <h1 className="mt-4 text-xl font-bold text-gray-900">Use Logged &amp; Destination Assigned</h1>
               <div className="mt-4 space-y-2 text-sm text-gray-700">
                 <p><strong>{frogCount} frogs</strong> taken from <strong>{sourceBin?.label}</strong> on <strong>{useDate}</strong> for <strong>{useType}</strong>.</p>
-                <p>{sourceBin && parseInt(frogCount) ? `${sourceBin.frog_count - parseInt(frogCount)} frogs remain in ${sourceBin.label}.` : ""}</p>
-                <p>Used frogs moved to <strong>{destBin?.label}</strong>.</p>
-                <p>Rest complete on <strong>{restCompleteDate}</strong> ({restDays} days).</p>
-                {notifyEmail && <p>Notifications scheduled for: {notifyEmail}</p>}
+                <p>{sourceBin ? `${sourceBin.frog_count - parseInt(frogCount)} frogs remain in ${sourceBin.label}.` : ""}</p>
+                <p>Destination rest bin: <strong>{destBin?.label}</strong>.</p>
+                <p>Rest complete on <strong>{restCompleteDateStr}</strong> ({restDays} days).</p>
+                {isGrouped && (
+                  <p className="text-brand-700">Grouped with existing rest cohort from {sourceBin?.label} (within {groupingWindowDays}-day window).</p>
+                )}
+                {notifyEmail && <p>Notification queued for: {notifyEmail}</p>}
               </div>
               {performanceNote && (
                 <div className="mt-3 rounded-lg bg-gray-50 p-3 text-xs text-gray-600">
                   <strong>Performance:</strong> {performanceNote}
                 </div>
               )}
+
+              {/* SMS/email message preview */}
+              <div className="mt-4 rounded-lg border border-blue-200 bg-blue-50 p-3 text-xs text-blue-800">
+                <p className="font-medium">Notification message:</p>
+                <p className="mt-1">
+                  &quot;{frogCount} frogs from {sourceBin?.label} should be placed in {destBin?.label} after use.
+                  {sourceBin && ` ${sourceBin.label} now has ${sourceBin.frog_count - parseInt(frogCount)} frogs remaining.`}
+                  {` Rest timer starts ${useDate}. Rest complete ${restCompleteDateStr}.`}&quot;
+                </p>
+              </div>
+
               <div className="mt-6 flex gap-3">
                 <a href="/bins" className="btn-primary">View Bins</a>
-                <button onClick={() => { setStep("source"); setSourceBinId(""); setFrogCount(""); }} className="btn-secondary">
+                <button onClick={() => { setStep("source"); setSourceBinId(""); setFrogCount(""); setUseType(""); }} className="btn-secondary">
                   Log Another Use
                 </button>
               </div>
@@ -186,7 +291,7 @@ export default function LogUsePage() {
                 ))}
               </div>
               {bins.filter((b) => b.frog_count > 0).length === 0 && (
-                <p className="text-sm text-gray-500">No bins have frogs yet. <a href="/frogs/add" className="text-brand-600 hover:underline">Add frogs first.</a></p>
+                <p className="text-sm text-gray-500">No bins have frogs yet.</p>
               )}
             </div>
           )}
@@ -224,7 +329,7 @@ export default function LogUsePage() {
             <div className="space-y-4">
               <h2 className="text-lg font-semibold text-gray-800">4. Use date</h2>
               <input type="date" value={useDate} onChange={(e) => setUseDate(e.target.value)} className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm" />
-              <p className="text-xs text-gray-500">Rest period: {restDays} days. Rest complete: {restCompleteDate}</p>
+              <p className="text-xs text-gray-500">Rest period: {restDays} days. Rest complete: {restCompleteDateStr}</p>
             </div>
           )}
 
@@ -233,34 +338,62 @@ export default function LogUsePage() {
               <h2 className="text-lg font-semibold text-gray-800">5. Destination / rest bin</h2>
               <p className="text-sm text-gray-600">Where do the used frogs go to rest?</p>
 
-              {/* Auto-recommendation */}
-              {recommended && (
-                <div className={`rounded-lg border-2 p-4 ${destBinId === recommended.id ? "border-brand-400 bg-brand-50" : "border-brand-200 bg-brand-50/50"}`}>
-                  <p className="text-xs font-semibold uppercase tracking-wider text-brand-600">Recommended</p>
-                  <div className="mt-1 flex items-center justify-between">
-                    <div>
-                      <p className="font-semibold text-gray-900">{recommended.label}</p>
-                      <p className="text-xs text-gray-500">
-                        {recommended.receiving_status === "open" ? "Open" : "Available"} · capacity: {recommended.capacity - recommended.frog_count} spots
-                      </p>
-                    </div>
-                    <button
-                      onClick={() => setDestBinId(recommended.id)}
-                      className={destBinId === recommended.id ? "btn-primary text-xs px-3 py-1.5" : "btn-secondary text-xs px-3 py-1.5"}
-                    >
-                      {destBinId === recommended.id ? "Selected" : "Use this bin"}
-                    </button>
-                  </div>
+              {/* No rest bin available warning */}
+              {noRestBinAvailable && (
+                <div className="rounded-lg border border-red-300 bg-red-50 p-3 text-sm text-red-800">
+                  <strong>No open rest bin available.</strong> Mark a bin as open/receiving before logging this use, or free capacity in an existing bin.
                 </div>
               )}
 
-              {/* All options */}
+              {/* Grouped recommendation */}
+              {groupedDestBin && (
+                <div className={`rounded-lg border-2 p-4 ${destBinId === groupedDestBin.id ? "border-brand-400 bg-brand-50" : "border-brand-200 bg-brand-50/50"}`}>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-brand-600">Recommended — Same cohort</p>
+                  <div className="mt-1">
+                    <p className="font-semibold text-gray-900">{groupedDestBin.label}</p>
+                    <p className="text-xs text-gray-600">
+                      Frogs from {sourceBin?.label} were sent here within the last {groupingWindowDays} days.
+                      Capacity: {groupedDestBin.capacity - groupedDestBin.frog_count} spots remaining.
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setDestBinId(groupedDestBin.id)}
+                    className={`mt-2 ${destBinId === groupedDestBin.id ? "btn-primary text-xs px-3 py-1.5" : "btn-secondary text-xs px-3 py-1.5"}`}
+                  >
+                    {destBinId === groupedDestBin.id ? "Selected" : "Use this bin (grouped)"}
+                  </button>
+                </div>
+              )}
+
+              {/* Best open bin recommendation (if not grouped) */}
+              {!groupedDestBin && openBinsWithCapacity.length > 0 && (
+                <div className={`rounded-lg border-2 p-4 ${destBinId === openBinsWithCapacity[0].id ? "border-brand-400 bg-brand-50" : "border-brand-200 bg-brand-50/50"}`}>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-brand-600">Recommended</p>
+                  <div className="mt-1">
+                    <p className="font-semibold text-gray-900">{openBinsWithCapacity[0].label}</p>
+                    <p className="text-xs text-gray-500">
+                      Open for receiving · capacity: {openBinsWithCapacity[0].capacity - openBinsWithCapacity[0].frog_count} spots
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setDestBinId(openBinsWithCapacity[0].id)}
+                    className={`mt-2 ${destBinId === openBinsWithCapacity[0].id ? "btn-primary text-xs px-3 py-1.5" : "btn-secondary text-xs px-3 py-1.5"}`}
+                  >
+                    {destBinId === openBinsWithCapacity[0].id ? "Selected" : "Use this bin"}
+                  </button>
+                </div>
+              )}
+
+              {/* All other options */}
               <div className="space-y-2 max-h-48 overflow-y-auto">
                 {bins.filter((b) => b.id !== sourceBinId).map((b) => (
                   <label key={b.id} className={`flex cursor-pointer items-center justify-between rounded-lg border p-3 transition-colors ${destBinId === b.id ? "border-brand-400 bg-brand-50" : "border-gray-200 hover:bg-gray-50"}`}>
                     <div className="flex items-center gap-3">
                       <input type="radio" name="dest" checked={destBinId === b.id} onChange={() => setDestBinId(b.id)} className="h-4 w-4" />
-                      <span className="text-sm font-medium text-gray-700">{b.label}</span>
+                      <div>
+                        <span className="text-sm font-medium text-gray-700">{b.label}</span>
+                        {b.receiving_status === "open" && <span className="ml-2 text-xs text-green-600">open</span>}
+                      </div>
                     </div>
                     <span className="font-mono text-xs text-gray-500">{b.frog_count}/{b.capacity}</span>
                   </label>
@@ -268,7 +401,7 @@ export default function LogUsePage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700">Notify when rest is complete</label>
+                <label className="block text-sm font-medium text-gray-700">Notify when placed / rest complete</label>
                 <input type="email" value={notifyEmail} onChange={(e) => setNotifyEmail(e.target.value)} placeholder="email@lab.edu (defaults to you)" className="mt-1 w-full rounded-lg border border-gray-300 px-4 py-2 text-sm" />
               </div>
             </div>
@@ -284,12 +417,16 @@ export default function LogUsePage() {
                 <p><strong>Date:</strong> {useDate}</p>
                 {performanceNote && <p><strong>Performance:</strong> {performanceNote}</p>}
                 <p><strong>Destination:</strong> {destBin?.label}</p>
-                <p><strong>Rest complete:</strong> {restCompleteDate} ({restDays} days)</p>
+                <p><strong>Rest complete:</strong> {restCompleteDateStr} ({restDays} days)</p>
                 {notifyEmail && <p><strong>Notify:</strong> {notifyEmail}</p>}
+                {groupedDestBin && destBinId === groupedDestBin.id && (
+                  <p className="text-brand-700"><strong>Grouped:</strong> Continues cohort from {sourceBin?.label}</p>
+                )}
               </div>
               <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 text-xs text-blue-800">
                 This will create linked records on both the source bin and destination bin.
-                {notifyEmail && ` A notification will be sent when rest is complete.`}
+                The destination bin status will change to &quot;Assigned destination.&quot;
+                {notifyEmail && ` A notification will be queued.`}
               </div>
             </div>
           )}
@@ -305,8 +442,8 @@ export default function LogUsePage() {
             Back
           </button>
           {step === "confirm" ? (
-            <button onClick={() => setStep("done")} className="rounded-lg bg-green-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-green-700 active:scale-[0.98]">
-              Confirm &amp; Save
+            <button onClick={handleConfirm} disabled={saving} className="rounded-lg bg-green-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-green-700 active:scale-[0.98] disabled:opacity-50">
+              {saving ? "Saving..." : "Confirm & Save"}
             </button>
           ) : (
             <button
@@ -318,11 +455,6 @@ export default function LogUsePage() {
           )}
         </div>
       </div>
-
-      {/* Context note */}
-      <p className="mt-8 text-center text-xs text-gray-400" suppressHydrationWarning>
-        Organization: {orgId ? orgId.slice(0, 8) + "..." : "—"}
-      </p>
     </div>
   );
 }

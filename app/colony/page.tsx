@@ -144,12 +144,14 @@ function StatTile({ label, value }: { label: string; value: number }) {
 function StatusBadge({ status }: { status: string }) {
   const cfg: Record<string, { label: string; cls: string }> = {
     open: { label: "Open", cls: "bg-green-100 text-green-700" },
+    assigned: { label: "Assigned Destination", cls: "bg-brand-100 text-brand-700" },
     occupied: { label: "Occupied", cls: "bg-blue-100 text-blue-700" },
     resting: { label: "Resting", cls: "bg-blue-100 text-blue-600" },
     ready: { label: "Ready", cls: "bg-green-100 text-green-700" },
     overdue: { label: "Overdue", cls: "bg-red-100 text-red-700" },
     gp_source: { label: "GP Source", cls: "bg-purple-100 text-purple-700" },
     closed: { label: "Closed", cls: "bg-gray-100 text-gray-600" },
+    pending_confirmation: { label: "Pending Confirmation", cls: "bg-yellow-100 text-yellow-700" },
   };
   const s = cfg[status] ?? cfg.occupied;
   return <span className={`status-badge ${s.cls}`}>{s.label}</span>;

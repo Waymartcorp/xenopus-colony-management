@@ -37,6 +37,8 @@ create table if not exists rotation_settings (
   preferred_reuse_window_end integer not null default 120,
   default_target_bin_capacity integer not null default 8,
   default_mode text not null default 'extract',
+  minimum_open_rest_bins integer not null default 10,
+  rest_bin_grouping_window_days integer not null default 2,
   created_at timestamptz not null default now(),
   unique(organization_id)
 );
@@ -594,6 +596,54 @@ create table if not exists organization_module_trials (
 );
 
 create index if not exists idx_module_trials_org on organization_module_trials(organization_id, status);
+
+-- ============================================================
+-- Bin Transfer Events (use → rest movement tracking)
+-- ============================================================
+
+create table if not exists bin_transfer_events (
+  id uuid primary key default gen_random_uuid(),
+  organization_id uuid not null references organizations(id) on delete cascade,
+  source_location_id uuid not null references locations(id) on delete cascade,
+  destination_location_id uuid not null references locations(id) on delete cascade,
+  frog_count integer not null,
+  use_type text not null,
+  use_date date not null,
+  rest_started_at timestamptz not null default now(),
+  rest_complete_at timestamptz,
+  grouping_window_days integer not null default 2,
+  grouped_with_transfer_id uuid references bin_transfer_events(id) on delete set null,
+  placement_status text not null default 'assigned' check (placement_status in ('assigned','notified','confirmed','adjusted')),
+  performance_note text,
+  notes text,
+  created_by uuid,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists idx_bin_transfers_org on bin_transfer_events(organization_id, use_date desc);
+create index if not exists idx_bin_transfers_source on bin_transfer_events(source_location_id);
+create index if not exists idx_bin_transfers_dest on bin_transfer_events(destination_location_id);
+create index if not exists idx_bin_transfers_status on bin_transfer_events(organization_id, placement_status);
+
+-- ============================================================
+-- Destination Bin Assignments (tracks open bin → receiving state)
+-- ============================================================
+
+create table if not exists destination_bin_assignments (
+  id uuid primary key default gen_random_uuid(),
+  organization_id uuid not null references organizations(id) on delete cascade,
+  source_location_id uuid not null references locations(id) on delete cascade,
+  destination_location_id uuid not null references locations(id) on delete cascade,
+  status text not null default 'assigned' check (status in ('assigned','receiving','resting','complete','cancelled')),
+  assigned_at timestamptz not null default now(),
+  notification_status text default 'pending' check (notification_status in ('pending','queued','sent','delivered','acknowledged')),
+  confirmation_status text default 'pending' check (confirmation_status in ('pending','confirmed','adjusted')),
+  notes text,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists idx_dest_assignments_org on destination_bin_assignments(organization_id, status);
+create index if not exists idx_dest_assignments_dest on destination_bin_assignments(destination_location_id);
 
 -- ============================================================
 -- TODO: Analytics views / materialized views for reporting
