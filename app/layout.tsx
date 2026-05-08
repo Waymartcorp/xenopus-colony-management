@@ -39,9 +39,9 @@ export default function RootLayout({
                 <NavItem href="/photos" label="Photos" icon="◲" />
               </NavSection>
               <NavSection title="Planning">
-                <NavItem href="/planner" label="Cycle Planner" icon="⊞" />
+                <NavItem href="/calculator" label="Colony Calculator" icon="⊞" accent />
+                <NavItem href="/planner" label="Cycle Planner" icon="▦" />
                 <NavItem href="/forecast" label="Forecast" icon="▷" />
-                <NavItem href="/capacity" label="Capacity" icon="▥" />
                 <NavItem href="/repopulation" label="Repopulation" icon="⊕" />
                 <NavItem href="/notifications" label="Notifications" icon="◎" />
               </NavSection>

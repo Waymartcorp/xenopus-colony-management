@@ -98,7 +98,10 @@ export default function ColonyPage() {
           <h1 className="page-header">Whole Colony View</h1>
           <p className="page-subtitle">{bins.length} bins · {totalFrogs} frogs</p>
         </div>
-        <a href="/use" className="btn-primary">Log Use &amp; Rest</a>
+        <div className="flex gap-2">
+          <a href="/reports" className="btn-secondary hidden sm:inline-flex">Export CSV</a>
+          <a href="/use" className="btn-primary">Log Use &amp; Rest</a>
+        </div>
       </div>
 
       {/* Stats */}

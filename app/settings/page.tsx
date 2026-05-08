@@ -100,6 +100,17 @@ export default function SettingsPage() {
           </div>
         </a>
 
+        {/* Export link */}
+        <a href="/reports" className="card-flat block px-6 py-5 transition-all hover:shadow-card-hover hover:border-gray-300">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-semibold text-gray-900">Export Colony Data (CSV)</p>
+              <p className="mt-1 text-xs text-gray-500">Download colony records for backup, analysis, or reporting.</p>
+            </div>
+            <span className="text-gray-400">→</span>
+          </div>
+        </a>
+
         {/* Account link */}
         <a href="/account" className="card-flat block px-6 py-5 transition-all hover:shadow-card-hover hover:border-gray-300">
           <div className="flex items-center justify-between">

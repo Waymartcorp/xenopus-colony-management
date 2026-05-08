@@ -200,11 +200,11 @@ export default function DashboardPage() {
 
       {/* Quick links */}
       <section className="mt-6 grid gap-3 sm:grid-cols-3">
-        <a href="/planner" className="card-flat flex items-center gap-3 px-4 py-3 transition-all hover:shadow-card-hover">
+        <a href="/calculator" className="card-flat flex items-center gap-3 px-4 py-3 transition-all hover:shadow-card-hover">
           <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-50 text-sm text-brand-600">⊞</span>
           <div>
-            <p className="text-xs font-semibold text-gray-800">Use Cycle Planner</p>
-            <p className="text-[10px] text-gray-500">Calculate open-bin needs</p>
+            <p className="text-xs font-semibold text-gray-800">Colony Calculator</p>
+            <p className="text-[10px] text-gray-500">Stock, ordering, capacity</p>
           </div>
         </a>
         <a href="/settings" className="card-flat flex items-center gap-3 px-4 py-3 transition-all hover:shadow-card-hover">
