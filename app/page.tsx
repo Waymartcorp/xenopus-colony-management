@@ -53,6 +53,11 @@ export default function HomePage() {
               Log In
             </Link>
           </div>
+
+          {/* Animated bin movement visualization */}
+          <div className="mt-16 animate-in" style={{ animationDelay: "0.2s" }}>
+            <BinMovementGraphic />
+          </div>
         </div>
       </section>
 
@@ -265,4 +270,101 @@ function NotifyIcon() {
 }
 function ReadyIcon() {
   return <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5"/></svg>;
+}
+
+function BinMovementGraphic() {
+  return (
+    <div className="relative mx-auto max-w-3xl">
+      {/* Connection lines */}
+      <svg className="absolute inset-0 h-full w-full" viewBox="0 0 600 160" fill="none" preserveAspectRatio="xMidYMid meet">
+        {/* Path from populated to use */}
+        <path d="M120 80 L200 80" stroke="url(#flow1)" strokeWidth="2" strokeDasharray="4 4" className="animate-dash" />
+        {/* Path from use to rest */}
+        <path d="M280 80 L370 80" stroke="url(#flow2)" strokeWidth="2" strokeDasharray="4 4" className="animate-dash" />
+        {/* Path from rest back to ready */}
+        <path d="M450 80 L530 80" stroke="url(#flow3)" strokeWidth="2" strokeDasharray="4 4" className="animate-dash" />
+        {/* Return arc */}
+        <path d="M530 65 C560 20, 40 20, 70 65" stroke="url(#flow4)" strokeWidth="1.5" strokeDasharray="3 3" fill="none" className="animate-dash-slow" />
+        {/* Gradients */}
+        <defs>
+          <linearGradient id="flow1" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stopColor="#0d9488" stopOpacity="0.3"/><stop offset="100%" stopColor="#0d9488" stopOpacity="0.8"/></linearGradient>
+          <linearGradient id="flow2" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stopColor="#2563eb" stopOpacity="0.3"/><stop offset="100%" stopColor="#2563eb" stopOpacity="0.8"/></linearGradient>
+          <linearGradient id="flow3" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stopColor="#16a34a" stopOpacity="0.3"/><stop offset="100%" stopColor="#16a34a" stopOpacity="0.8"/></linearGradient>
+          <linearGradient id="flow4" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stopColor="#0d9488" stopOpacity="0.2"/><stop offset="100%" stopColor="#0d9488" stopOpacity="0.5"/></linearGradient>
+        </defs>
+      </svg>
+
+      {/* Bins and dots */}
+      <div className="relative flex items-center justify-between px-4 py-8">
+        {/* Populated bin */}
+        <AnimatedBin label="Populated" color="brand" dotCount={5} dotColor="bg-brand-400" />
+        {/* Use event */}
+        <AnimatedBin label="In Use" color="blue" dotCount={2} dotColor="bg-blue-400" pulsing />
+        {/* Rest bin */}
+        <AnimatedBin label="Resting" color="amber" dotCount={3} dotColor="bg-amber-400" />
+        {/* Ready bin */}
+        <AnimatedBin label="Ready" color="green" dotCount={4} dotColor="bg-green-400" />
+      </div>
+
+      {/* Floating particles - data flow indicators */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        {Array.from({ length: 8 }).map((_, i) => (
+          <div
+            key={i}
+            className="absolute h-1.5 w-1.5 rounded-full opacity-60"
+            style={{
+              background: ["#0d9488", "#2563eb", "#d97706", "#16a34a"][i % 4],
+              left: `${10 + i * 12}%`,
+              top: `${35 + Math.sin(i * 1.2) * 20}%`,
+              animation: `float-particle ${3 + i * 0.4}s ease-in-out infinite alternate`,
+              animationDelay: `${i * 0.3}s`,
+            }}
+          />
+        ))}
+      </div>
+
+      {/* Legend */}
+      <div className="mt-4 flex justify-center gap-4 text-[10px] text-gray-400">
+        <span className="flex items-center gap-1"><span className="h-1.5 w-1.5 rounded-full bg-brand-400" />population</span>
+        <span className="flex items-center gap-1"><span className="h-1.5 w-1.5 rounded-full bg-blue-400" />use event</span>
+        <span className="flex items-center gap-1"><span className="h-1.5 w-1.5 rounded-full bg-amber-400" />rest cycle</span>
+        <span className="flex items-center gap-1"><span className="h-1.5 w-1.5 rounded-full bg-green-400" />ready</span>
+      </div>
+    </div>
+  );
+}
+
+function AnimatedBin({ label, color, dotCount, dotColor, pulsing }: {
+  label: string;
+  color: "brand" | "blue" | "amber" | "green";
+  dotCount: number;
+  dotColor: string;
+  pulsing?: boolean;
+}) {
+  const borderColors = {
+    brand: "border-brand-300 bg-brand-50/80",
+    blue: "border-blue-300 bg-blue-50/80",
+    amber: "border-amber-300 bg-amber-50/80",
+    green: "border-green-300 bg-green-50/80",
+  };
+  return (
+    <div className="relative flex flex-col items-center">
+      <div className={`relative flex h-16 w-16 items-center justify-center rounded-xl border-2 ${borderColors[color]} ${pulsing ? "animate-pulse-soft" : ""} transition-transform hover:scale-110`}>
+        {/* Dots inside bin representing frogs */}
+        <div className="flex flex-wrap items-center justify-center gap-0.5 p-1">
+          {Array.from({ length: dotCount }).map((_, i) => (
+            <div
+              key={i}
+              className={`h-2 w-2 rounded-full ${dotColor}`}
+              style={{
+                animation: `dot-bob ${1.5 + i * 0.2}s ease-in-out infinite alternate`,
+                animationDelay: `${i * 0.15}s`,
+              }}
+            />
+          ))}
+        </div>
+      </div>
+      <span className="mt-2 text-[10px] font-medium text-gray-500">{label}</span>
+    </div>
+  );
 }

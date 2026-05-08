@@ -93,4 +93,35 @@
     background-image: radial-gradient(circle, rgb(0 0 0 / 0.04) 1px, transparent 1px);
     background-size: 24px 24px;
   }
+
+  .animate-dash {
+    animation: dash-flow 2s linear infinite;
+  }
+
+  .animate-dash-slow {
+    animation: dash-flow 4s linear infinite;
+  }
+
+  .animate-pulse-soft {
+    animation: pulse-soft 2s ease-in-out infinite;
+  }
+}
+
+@keyframes dash-flow {
+  to { stroke-dashoffset: -20; }
+}
+
+@keyframes float-particle {
+  0% { transform: translateY(0) translateX(0); opacity: 0.3; }
+  100% { transform: translateY(-8px) translateX(6px); opacity: 0.7; }
+}
+
+@keyframes dot-bob {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-2px); }
+}
+
+@keyframes pulse-soft {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.03); opacity: 0.9; }
 }
