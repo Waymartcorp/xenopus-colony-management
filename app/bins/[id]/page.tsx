@@ -162,6 +162,9 @@ export default function BinDetailPage({
       {/* Destination assignments */}
       <DestinationAssignments binId={binId} />
 
+      {/* Record Completeness */}
+      <RecordCompleteness binId={binId} frogCount={bin.frog_count} hasTransfers={false} />
+
       {/* Photo note */}
       <div className="mt-8 rounded-lg border border-gray-100 bg-gray-50 p-3 text-center text-xs text-gray-500">
         Photos stored now may support future photo-ID tools, but no automatic recognition is active yet.
@@ -303,6 +306,75 @@ function DestinationAssignments({ binId }: { binId: string }) {
               </span>
             </div>
             <p className="mt-1 text-xs text-gray-600">Assigned {new Date(a.assigned_at).toLocaleDateString()}</p>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function RecordCompleteness({ binId, frogCount, hasTransfers }: { binId: string; frogCount: number; hasTransfers: boolean }) {
+  const [items, setItems] = useState<{ label: string; status: "complete" | "missing" | "calculated" }[]>([]);
+
+  useEffect(() => {
+    async function check() {
+      const supabase = createBrowserSupabaseClient();
+
+      // Check if there are transfer events for this bin
+      const { count: transferCount } = await supabase
+        .from("bin_transfer_events")
+        .select("*", { count: "exact", head: true })
+        .or(`source_location_id.eq.${binId},destination_location_id.eq.${binId}`);
+
+      const hasUseHistory = (transferCount ?? 0) > 0;
+
+      // Check assignments
+      const { count: assignCount } = await supabase
+        .from("destination_bin_assignments")
+        .select("*", { count: "exact", head: true })
+        .eq("destination_location_id", binId);
+
+      const hasAssignment = (assignCount ?? 0) > 0;
+
+      const checks: { label: string; status: "complete" | "missing" | "calculated" }[] = [
+        { label: "Frog count recorded", status: frogCount > 0 ? "complete" : "missing" },
+        { label: "Use history", status: hasUseHistory ? "complete" : "missing" },
+        { label: "Destination assignment", status: hasAssignment ? "complete" : "missing" },
+        { label: "Rest date calculated", status: hasUseHistory ? "calculated" : "missing" },
+        { label: "Photo archive", status: "missing" },
+      ];
+
+      setItems(checks);
+    }
+    check();
+  }, [binId, frogCount]);
+
+  if (items.length === 0) return null;
+
+  const complete = items.filter((i) => i.status === "complete" || i.status === "calculated").length;
+
+  return (
+    <section className="mt-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-sm font-semibold text-gray-800">Record Completeness</h2>
+        <span className="text-xs text-gray-400">{complete}/{items.length}</span>
+      </div>
+      <div className="mt-2 space-y-1">
+        {items.map((item) => (
+          <div key={item.label} className="flex items-center gap-2 py-1">
+            <span className={`flex h-4 w-4 items-center justify-center rounded-full text-[9px] font-bold ${
+              item.status === "complete" ? "bg-green-100 text-green-600" :
+              item.status === "calculated" ? "bg-blue-100 text-blue-600" :
+              "bg-gray-100 text-gray-400"
+            }`}>
+              {item.status === "complete" ? "✓" : item.status === "calculated" ? "∗" : "—"}
+            </span>
+            <span className={`text-xs ${item.status === "missing" ? "text-gray-400" : "text-gray-700"}`}>
+              {item.label}
+            </span>
+            {item.status === "missing" && (
+              <span className="text-[10px] text-gray-300">not yet recorded</span>
+            )}
           </div>
         ))}
       </div>

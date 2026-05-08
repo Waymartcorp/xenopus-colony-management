@@ -29,7 +29,7 @@ interface UsageStats {
   trend: "increasing" | "stable" | "decreasing" | "insufficient";
 }
 
-type Tab = "stock" | "usage" | "ordering" | "scenario" | "ask";
+type Tab = "stock" | "usage" | "ordering" | "scenario" | "ask" | "reality";
 
 export default function CalculatorPage() {
   const [tab, setTab] = useState<Tab>("stock");
@@ -173,13 +173,14 @@ export default function CalculatorPage() {
     { key: "usage", label: "Usage Rate", icon: "↻" },
     { key: "ordering", label: "Ordering Advisor", icon: "⊕" },
     { key: "scenario", label: "Scenario", icon: "⊞" },
+    { key: "reality", label: "Reality Check", icon: "◎" },
     { key: "ask", label: "Ask XenoTrack", icon: "?" },
   ];
 
   return (
     <div className="p-6 lg:p-10">
       <h1 className="page-header">Colony Calculator</h1>
-      <p className="page-subtitle">Real-time capacity analysis, ordering guidance, and sustainability checks.</p>
+      <p className="page-subtitle">Replace guesswork with real numbers. Stock, usage, ordering capacity, and colony sustainability.</p>
 
       {/* Tabs */}
       <div className="mt-6 flex gap-1 overflow-x-auto rounded-xl border border-gray-200 bg-gray-50 p-1">
@@ -204,6 +205,7 @@ export default function CalculatorPage() {
         {tab === "usage" && <UsagePanel usage={usage} />}
         {tab === "ordering" && <OrderingPanel snapshot={snapshot} usage={usage} />}
         {tab === "scenario" && <ScenarioPanel snapshot={snapshot} />}
+        {tab === "reality" && <RealityCheckPanel snapshot={snapshot} usage={usage} />}
         {tab === "ask" && <AskPanel snapshot={snapshot} usage={usage} />}
       </div>
     </div>
@@ -667,6 +669,103 @@ function AskPanel({ snapshot, usage }: { snapshot: ColonySnapshot | null; usage:
           </p>
         </div>
       )}
+    </div>
+  );
+}
+
+// ─── Reality Check Panel ──────────────────────────────────────────────────
+
+function RealityCheckPanel({ snapshot, usage }: { snapshot: ColonySnapshot | null; usage: UsageStats | null }) {
+  if (!snapshot || snapshot.totalBins === 0) {
+    return <EmptyCalc message="Set up your colony to see the reality check comparison." />;
+  }
+
+  const fpb = snapshot.totalCapacity > 0 && snapshot.totalBins > 0
+    ? Math.round(snapshot.totalCapacity / snapshot.totalBins) : 6;
+  const wu = usage?.avgPerWeek ?? 0;
+  const bpw = wu > 0 ? Math.ceil(wu / fpb) : 0;
+  const restWeeks = Math.ceil(snapshot.restDays / 7);
+  const expectedRestBins = bpw * restWeeks;
+  const expectedAvailable = snapshot.totalFrogs - (snapshot.restingFrogs);
+
+  const comparisons = [
+    {
+      label: "Open rest bins",
+      assumption: `${snapshot.minOpenBins} (configured minimum)`,
+      actual: `${snapshot.openBins}`,
+      status: snapshot.openBins >= snapshot.minOpenBins ? "ok" : "gap",
+    },
+    {
+      label: "Bins needed for rest cycle",
+      assumption: wu > 0 ? `~${expectedRestBins} (based on ${wu} frogs/wk)` : "Unknown (no use data)",
+      actual: `${snapshot.openBins} available`,
+      status: wu === 0 ? "unknown" : snapshot.openBins >= expectedRestBins ? "ok" : "gap",
+    },
+    {
+      label: "Frogs actually available",
+      assumption: `${snapshot.totalFrogs} total in colony`,
+      actual: `${expectedAvailable} (excluding resting)`,
+      status: expectedAvailable > 0 ? "ok" : "gap",
+    },
+    {
+      label: "Usage rate vs capacity",
+      assumption: wu > 0 ? `${wu} frogs/week demand` : "No use data yet",
+      actual: wu > 0 && expectedAvailable > 0
+        ? `~${Math.floor(expectedAvailable / wu)} weeks of supply`
+        : "Insufficient data",
+      status: wu > 0 && expectedAvailable / wu > 12 ? "ok" : wu > 0 ? "gap" : "unknown",
+    },
+    {
+      label: "Rest period compliance",
+      assumption: `${snapshot.restDays} days configured`,
+      actual: snapshot.overdueFrogs > 0 ? `${snapshot.overdueFrogs} frogs overdue` : "All within period",
+      status: snapshot.overdueFrogs === 0 ? "ok" : "gap",
+    },
+  ];
+
+  return (
+    <div className="space-y-6">
+      <div className="card border-l-4 border-brand-400 p-5">
+        <h3 className="text-sm font-semibold text-gray-800">Assumptions vs Actuals</h3>
+        <p className="mt-1 text-xs text-gray-500">
+          Compare what your colony settings assume with what the data shows. Gaps indicate where reality differs from plan.
+        </p>
+      </div>
+
+      <div className="space-y-2">
+        {comparisons.map((c) => (
+          <div key={c.label} className="card-flat overflow-hidden">
+            <div className="flex items-stretch">
+              <div className={`w-1 flex-shrink-0 ${c.status === "ok" ? "bg-green-400" : c.status === "gap" ? "bg-yellow-400" : "bg-gray-200"}`} />
+              <div className="flex-1 p-4">
+                <p className="text-sm font-medium text-gray-800">{c.label}</p>
+                <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                  <div>
+                    <p className="text-[10px] font-medium uppercase tracking-wider text-gray-400">Assumption</p>
+                    <p className="text-xs text-gray-600">{c.assumption}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-medium uppercase tracking-wider text-gray-400">Actual</p>
+                    <p className={`text-xs font-medium ${c.status === "ok" ? "text-green-700" : c.status === "gap" ? "text-yellow-700" : "text-gray-500"}`}>
+                      {c.actual}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {wu === 0 && (
+        <div className="rounded-xl border border-gray-200 bg-gray-50 p-4 text-sm text-gray-600">
+          Some comparisons require logged use events. As you log use from the &quot;Log Use &amp; Rest&quot; page, these will populate with real data.
+        </div>
+      )}
+
+      <div className="rounded-lg border border-gray-100 bg-gray-50 p-3 text-xs text-gray-500">
+        This is not punitive — it helps PIs and lab managers see where the colony plan matches reality, and where adjustments may help.
+      </div>
     </div>
   );
 }

@@ -198,6 +198,33 @@ export default function DashboardPage() {
         </div>
       </section>
 
+      {/* PI Summary — Colony Reality Check */}
+      <section className="mt-8">
+        <div className="flex items-center justify-between">
+          <h2 className="text-sm font-semibold text-gray-800">Colony Reality Check</h2>
+          <a href="/calculator" className="text-xs font-medium text-brand-600 hover:text-brand-700">Full calculator →</a>
+        </div>
+        <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+          <RealityItem
+            label="Frogs actually available"
+            value={`${state.frogCount - state.restingBins * 6}`}
+            note="Active frogs not currently resting"
+          />
+          <RealityItem
+            label="Bins needing attention"
+            value={`${state.overdueBins}`}
+            note={state.overdueBins > 0 ? "Overdue — past rest period" : "None overdue"}
+            warning={state.overdueBins > 0}
+          />
+          <RealityItem
+            label="Open rest capacity"
+            value={`${state.openBins} bins`}
+            note={state.openBins < 5 ? "Low — may bottleneck soon" : "Sufficient for current use"}
+            warning={state.openBins < 5}
+          />
+        </div>
+      </section>
+
       {/* Quick links */}
       <section className="mt-6 grid gap-3 sm:grid-cols-3">
         <a href="/calculator" className="card-flat flex items-center gap-3 px-4 py-3 transition-all hover:shadow-card-hover">
@@ -207,11 +234,11 @@ export default function DashboardPage() {
             <p className="text-[10px] text-gray-500">Stock, ordering, capacity</p>
           </div>
         </a>
-        <a href="/settings" className="card-flat flex items-center gap-3 px-4 py-3 transition-all hover:shadow-card-hover">
-          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-gray-100 text-sm text-gray-600">⚙</span>
+        <a href="/reports" className="card-flat flex items-center gap-3 px-4 py-3 transition-all hover:shadow-card-hover">
+          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-gray-100 text-sm text-gray-600">⊡</span>
           <div>
-            <p className="text-xs font-semibold text-gray-800">Settings</p>
-            <p className="text-[10px] text-gray-500">Rest rules &amp; workspace</p>
+            <p className="text-xs font-semibold text-gray-800">Reports &amp; Export</p>
+            <p className="text-[10px] text-gray-500">CSV, assumptions vs actuals</p>
           </div>
         </a>
         <a href="/notifications" className="card-flat flex items-center gap-3 px-4 py-3 transition-all hover:shadow-card-hover">
@@ -245,6 +272,16 @@ function EmptyState({ title, description, actions }: {
           </a>
         ))}
       </div>
+    </div>
+  );
+}
+
+function RealityItem({ label, value, note, warning }: { label: string; value: string; note: string; warning?: boolean }) {
+  return (
+    <div className={`rounded-xl border p-4 ${warning ? "border-yellow-200 bg-yellow-50/50" : "border-gray-200 bg-white"}`}>
+      <p className="text-xs font-medium text-gray-500">{label}</p>
+      <p className={`mt-1 text-xl font-bold ${warning ? "text-yellow-700" : "text-gray-900"}`}>{value}</p>
+      <p className="mt-1 text-[10px] text-gray-400">{note}</p>
     </div>
   );
 }

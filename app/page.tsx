@@ -38,12 +38,12 @@ export default function HomePage() {
               ))}
             </div>
             <h1 className="text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl lg:text-6xl">
-              Your colony, organized<br className="hidden sm:block" /> around the bin-cycling loop
+              Replace colony guesswork<br className="hidden sm:block" /> with dated records
             </h1>
             <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-gray-600">
-              XenoTrack is a private Xenopus colony register. Define bins, track frogs,
-              log use, manage rest periods, and know exactly what&apos;s ready — without losing
-              institutional knowledge.
+              XenoTrack is a private colony register that shows what actually happened to each bin.
+              Know where used frogs went. Know which frogs are really rested.
+              Know when your colony will run short — all without losing institutional knowledge.
             </p>
           </div>
           <div className="mt-10 flex flex-wrap justify-center gap-4 animate-in" style={{ animationDelay: "0.1s" }}>
@@ -100,38 +100,41 @@ export default function HomePage() {
       <section className="py-20">
         <div className="mx-auto max-w-5xl px-6">
           <h2 className="text-center text-2xl font-bold tracking-tight text-gray-900">
-            Built for the way you already work
+            See what&apos;s actually happening in your colony
           </h2>
+          <p className="mx-auto mt-3 max-w-lg text-center text-sm text-gray-500">
+            No more guessing how many frogs are available, which bins are resting, or when you need to reorder.
+          </p>
           <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             <FeatureCard
               color="brand"
-              title="Bin-centered tracking"
-              description="Organize by bins. Every frog lives in a bin with a clear status: available, resting, or ready for use."
+              title="Know what actually happened to each bin"
+              description="Every use, transfer, and rest period is recorded with dates. See the full history of any bin instantly."
             />
             <FeatureCard
               color="blue"
-              title="Use → rest in one step"
-              description="Log use and the system recommends a destination bin. Linked records on both source and destination."
+              title="Know where used frogs went"
+              description="Log use and the system recommends a destination bin. Source and destination are permanently linked."
             />
             <FeatureCard
               color="green"
-              title="Automatic rest timers"
-              description="Rest period starts automatically. Get notified when bins are ready to return to rotation."
+              title="Know which frogs are really rested"
+              description="Rest timers are calculated from actual use dates. No guessing — the system tells you what's ready."
             />
             <FeatureCard
               color="purple"
-              title="Photo archive"
-              description="Attach photos to bins, frogs, or events. Future photo-ID tools may use your archive."
+              title="Know how many frogs are actually available"
+              description="Real-time stock counts from actual records. See active, resting, ready, and overdue at a glance."
             />
             <FeatureCard
               color="amber"
-              title="Performance tracking"
-              description="Log oocyte quality, extract yield, and use counts. See which bins perform best over time."
+              title="Know when your colony will run short"
+              description="Colony calculator uses your real usage data to predict shortage dates and safe ordering capacity."
             />
             <FeatureCard
               color="teal"
-              title="Colony forecasting"
-              description="Know when you'll run short. Capacity planning and repopulation guidance built in."
+              title="Take the guesswork out of rest-bin placement"
+              description="XenoTrack recommends which bin to place used frogs in. Confirms placement. Tracks the rest cohort."
             />
           </div>
         </div>

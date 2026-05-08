@@ -8,11 +8,24 @@ Internal repo: `xenopus-colony-management`
 
 ## What It Is
 
-XenoTrack is a private Xenopus colony register for tracking bins, frogs, use/rest cycles, performance, and future availability.
+XenoTrack is a private Xenopus colony register that replaces colony guesswork with dated records. It tracks bins, frogs, use/rest cycles, performance, and future availability — showing what actually happened, not what people assume happened.
+
+### Core Principle
+
+Bridge the gap between what PIs think is happening and what actually happens day-to-day. Make this visible without blame.
 
 ### Core Loop
 
 Populate bins → frogs acclimate → bins become ready → log use → move to rest → rest timer → notification → return to rotation.
+
+### Key Capabilities
+
+- **Colony Calculator** — real-time stock counts, ordering advisor, sustainability checks, "Ask XenoTrack" guided answers
+- **Reality Check** — assumptions vs actuals comparison (expected bins vs actual, expected usage vs actual)
+- **Record Completeness** — shows where data is complete or missing (placement confirmed, performance notes, photos)
+- **CSV Export** — download colony records for backup, analysis, or reporting
+- **PI Summary** — high-level colony health at a glance
+- **Technician Workflow** — guided bin-to-bin movement with recommendations
 
 ### Base Product (always included)
 

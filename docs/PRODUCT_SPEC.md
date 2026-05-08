@@ -2,7 +2,55 @@
 
 ## Product Definition
 
-XenoTrack Colony Register is a private, time-aware Xenopus colony management system. It enables labs to track frog inventory, housing, use/rest rotation, repopulation, performance, protocols/results, environmental conditions, and forecasting — all in one system.
+XenoTrack Colony Register is a private, time-aware Xenopus colony management system that replaces colony guesswork with dated records. It enables labs to track frog inventory, housing, use/rest rotation, repopulation, performance, protocols/results, environmental conditions, and forecasting — all in one system.
+
+## Core Principle
+
+XenoTrack bridges the gap between what PIs/lab managers *think* is happening in their colony and what *actually* happens day-to-day with bins, frogs, use, rest, transfers, repopulation, and performance. The system makes this visible without blaming anyone.
+
+### Product Language
+
+- "Replace colony guesswork with dated records."
+- "See what actually happened to each bin."
+- "Know where used frogs went."
+- "Know which frogs are really rested."
+- "Know how many frogs are actually available."
+- "Know when your colony will run short."
+- "Take the guesswork out of reloading frogs into rest bins."
+
+### User Views
+
+**PI / Lab Manager View** — high-level colony summary answering:
+- What is our full frog stock now?
+- How many frogs are actually available vs resting?
+- What is our present usage rate?
+- Are we using frogs faster than they become available?
+- Where are the bottlenecks?
+- When do we need to order more frogs?
+- Are placements confirmed? Are performance notes complete?
+
+**Technician / Daily Operations View** — practical bin workflow:
+- Which bin to use, how many frogs taken, where they should go
+- Destination bin recommendation, placement status, rest timer
+- Notification status and record completeness cues
+
+### Data Confidence Cues
+
+The system shows where records are complete or missing:
+- Placement confirmed / not yet confirmed
+- Performance note present / missing
+- Rest date calculated / estimated
+- Use count known / unknown
+- Photo archive complete / incomplete
+- Notification sent / not sent
+
+### Assumptions vs Actuals
+
+Colony Calculator includes a "Reality Check" comparing configured assumptions with actual data:
+- Expected open rest bins vs actual
+- Expected usage rate vs actual
+- Expected rest compliance vs actual overdue count
+- Expected available frogs vs actual available
 
 ## Target Users
 
