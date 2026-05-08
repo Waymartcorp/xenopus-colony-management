@@ -38,12 +38,11 @@ export default function HomePage() {
               ))}
             </div>
             <h1 className="text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl lg:text-6xl">
-              Replace colony guesswork<br className="hidden sm:block" /> with dated records
+              Xenopus frog use workflow
             </h1>
             <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-gray-600">
-              XenoTrack is a private colony register that shows what actually happened to each bin.
-              Know where used frogs went. Know which frogs are really rested.
-              Know when your colony will run short — all without losing institutional knowledge.
+              XenoTrack is a colony register and tank-based handling system with rest timers
+              that maintains system continuity and institutional knowledge.
             </p>
           </div>
           <div className="mt-10 flex flex-wrap justify-center gap-4 animate-in" style={{ animationDelay: "0.1s" }}>
