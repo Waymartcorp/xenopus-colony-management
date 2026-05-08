@@ -39,13 +39,14 @@ export default function RootLayout({
                 <NavItem href="/photos" label="Photos" icon="◲" />
               </NavSection>
               <NavSection title="Planning">
+                <NavItem href="/planner" label="Cycle Planner" icon="⊞" />
                 <NavItem href="/forecast" label="Forecast" icon="▷" />
                 <NavItem href="/capacity" label="Capacity" icon="▥" />
                 <NavItem href="/repopulation" label="Repopulation" icon="⊕" />
                 <NavItem href="/notifications" label="Notifications" icon="◎" />
               </NavSection>
               <div className="mt-auto border-t border-gray-100 pt-4">
-                <NavItem href="/workspace-profile" label="Workspace" icon="⚙" />
+                <NavItem href="/settings" label="Settings" icon="⚙" />
                 <NavItem href="/account" label="Account" icon="○" />
               </div>
             </div>

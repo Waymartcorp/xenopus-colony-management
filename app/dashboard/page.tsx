@@ -125,14 +125,14 @@ export default function DashboardPage() {
     return (
       <div className="p-6 lg:p-10">
         <h1 className="page-header">Colony Dashboard</h1>
-        <p className="page-subtitle">{state.binCount} bins · {state.frogCount} frogs</p>
+        <p className="page-subtitle">{state.binCount} bins · {state.frogCount} frogs · {state.openBins} open for rest</p>
         <EmptyState
           title="Your colony is populated. Log first use when frogs are taken from a bin."
-          description="When frogs are used, log the event and move them to a rest bin. The system tracks rest timers and notifies you when they're ready."
+          description="When frogs are used, log the event and XenoTrack recommends a destination rest bin. The system tracks rest timers and notifies you when frogs are ready."
           actions={[
             { href: "/use", label: "Log use from bin", primary: true },
+            { href: "/planner", label: "Use Cycle Planner" },
             { href: "/bins", label: "View bins" },
-            { href: "/workspace-profile", label: "Set rest rules" },
           ]}
         />
       </div>
@@ -147,7 +147,10 @@ export default function DashboardPage() {
           <h1 className="page-header">Colony Dashboard</h1>
           <p className="page-subtitle">{state.binCount} bins · {state.frogCount} frogs</p>
         </div>
-        <a href="/use" className="btn-primary">Log Use &amp; Rest</a>
+        <div className="flex gap-2">
+          <a href="/planner" className="btn-secondary hidden sm:inline-flex">Planner</a>
+          <a href="/use" className="btn-primary">Log Use &amp; Rest</a>
+        </div>
       </div>
 
       {/* Stats */}
@@ -171,7 +174,7 @@ export default function DashboardPage() {
                 ? `${state.restingBins} bin(s) are resting. You'll be notified when they're ready.`
                 : "Log a use event when frogs are taken from a bin."}
             </p>
-            <div className="mt-4 flex gap-3">
+            <div className="mt-4 flex flex-wrap gap-3">
               <a href="/use" className="btn-primary">Log Use &amp; Rest</a>
               <a href="/bins" className="btn-secondary">View All Bins</a>
               <a href="/colony" className="btn-secondary">Whole Colony</a>
@@ -180,11 +183,45 @@ export default function DashboardPage() {
         </div>
       </section>
 
-      {/* Footer */}
-      <div className="mt-10 rounded-xl border border-gray-100 bg-gray-50 p-4 text-center text-sm text-gray-500">
-        Keep every bin and frog record in one place. Track performance over time.
-        Preserve knowledge across technicians and projects.
-      </div>
+      {/* Cycle visual summary */}
+      <section className="mt-6">
+        <div className="flex items-center gap-3 overflow-x-auto rounded-xl border border-gray-100 bg-gray-50/50 px-5 py-4">
+          <CycleStep icon="◫" label="Populated" count={state.binCount - state.openBins - state.restingBins} active />
+          <CycleArrow />
+          <CycleStep icon="↑" label="Used" count={null} />
+          <CycleArrow />
+          <CycleStep icon="◷" label="Resting" count={state.restingBins} />
+          <CycleArrow />
+          <CycleStep icon="✓" label="Ready" count={state.readyBins} />
+          <CycleArrow />
+          <CycleStep icon="↺" label="Return" count={null} />
+        </div>
+      </section>
+
+      {/* Quick links */}
+      <section className="mt-6 grid gap-3 sm:grid-cols-3">
+        <a href="/planner" className="card-flat flex items-center gap-3 px-4 py-3 transition-all hover:shadow-card-hover">
+          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-50 text-sm text-brand-600">⊞</span>
+          <div>
+            <p className="text-xs font-semibold text-gray-800">Use Cycle Planner</p>
+            <p className="text-[10px] text-gray-500">Calculate open-bin needs</p>
+          </div>
+        </a>
+        <a href="/settings" className="card-flat flex items-center gap-3 px-4 py-3 transition-all hover:shadow-card-hover">
+          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-gray-100 text-sm text-gray-600">⚙</span>
+          <div>
+            <p className="text-xs font-semibold text-gray-800">Settings</p>
+            <p className="text-[10px] text-gray-500">Rest rules &amp; workspace</p>
+          </div>
+        </a>
+        <a href="/notifications" className="card-flat flex items-center gap-3 px-4 py-3 transition-all hover:shadow-card-hover">
+          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50 text-sm text-blue-600">◉</span>
+          <div>
+            <p className="text-xs font-semibold text-gray-800">Notifications</p>
+            <p className="text-[10px] text-gray-500">Rest-complete alerts</p>
+          </div>
+        </a>
+      </section>
     </div>
   );
 }
@@ -210,6 +247,20 @@ function EmptyState({ title, description, actions }: {
       </div>
     </div>
   );
+}
+
+function CycleStep({ icon, label, count, active }: { icon: string; label: string; count: number | null; active?: boolean }) {
+  return (
+    <div className={`flex flex-col items-center gap-1 rounded-lg px-3 py-2 ${active ? "bg-brand-50" : ""}`}>
+      <span className={`text-lg ${active ? "text-brand-600" : "text-gray-400"}`}>{icon}</span>
+      <span className="text-[10px] font-medium text-gray-600">{label}</span>
+      {count !== null && <span className="text-xs font-bold text-gray-900">{count}</span>}
+    </div>
+  );
+}
+
+function CycleArrow() {
+  return <span className="text-sm text-gray-300">→</span>;
 }
 
 function StatCard({ label, value, variant }: { label: string; value: number; variant: "ready" | "resting" | "danger" | "neutral" }) {
