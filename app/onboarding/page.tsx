@@ -17,7 +17,7 @@ interface BinDef {
 
 const STATUS_OPTIONS: { value: BinStatus; label: string; description: string }[] = [
   { value: "populated", label: "Populated", description: "Contains frogs, ready for use" },
-  { value: "open", label: "Open (receiving)", description: "Empty, available to receive resting frogs" },
+  { value: "open", label: "Open (receiving)", description: "Available to receive incoming orders or frogs after use" },
   { value: "gp_source", label: "GP source", description: "General population source bin" },
   { value: "closed", label: "Closed / hold", description: "Not in use" },
 ];
@@ -106,35 +106,53 @@ export default function OnboardingPage() {
     setError(null);
     setFailedStep(null);
 
+    function logStep(stepName: string, table: string, err: { message: string; code?: string; details?: string; hint?: string }) {
+      console.error(`[onboarding] FAILED at "${stepName}" (table: ${table})`, {
+        message: err.message,
+        code: err.code,
+        details: err.details,
+        hint: err.hint,
+      });
+    }
+
     try {
       const supabase = createBrowserSupabaseClient();
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { window.location.href = "/login"; return; }
 
-      // 1. Create organization
-      setFailedStep("Creating organization...");
-      const { data: org, error: orgErr } = await supabase
+      // Generate org ID client-side to avoid needing a SELECT after INSERT.
+      // The SELECT policy requires is_org_member(id) which fails before membership exists.
+      const orgId = crypto.randomUUID();
+
+      // Step 1: Create organization
+      setFailedStep("create_organization");
+      const { error: orgErr } = await supabase
         .from("organizations")
         .insert({
+          id: orgId,
           name: labName,
           organization_type: "lab",
           primary_lab_mode: labMode === "research" ? "extract" : labMode,
-        })
-        .select()
-        .single();
-      if (orgErr) throw new Error(`Organization: ${orgErr.message}`);
+        });
+      if (orgErr) {
+        logStep("create_organization", "organizations", orgErr);
+        throw new Error(`Create organization: ${orgErr.message}${orgErr.hint ? ` (hint: ${orgErr.hint})` : ""}`);
+      }
 
-      // 2. Create membership (owner) — requires the bootstrap policy
-      setFailedStep("Creating owner membership...");
+      // Step 2: Create membership (owner)
+      setFailedStep("create_membership");
       const { error: memErr } = await supabase
         .from("organization_memberships")
-        .insert({ organization_id: org.id, user_id: user.id, role: "owner" });
-      if (memErr) throw new Error(`Membership: ${memErr.message}`);
+        .insert({ organization_id: orgId, user_id: user.id, role: "owner" });
+      if (memErr) {
+        logStep("create_membership", "organization_memberships", memErr);
+        throw new Error(`Create membership: ${memErr.message}${memErr.hint ? ` (hint: ${memErr.hint})` : ""}`);
+      }
 
-      // 3. Create bins/locations
-      setFailedStep("Creating bins...");
-      const locationInserts = bins.map((b, idx) => ({
-        organization_id: org.id,
+      // Step 3: Create bins/locations
+      setFailedStep("create_locations");
+      const locationInserts = bins.map((b) => ({
+        organization_id: orgId,
         location_type: housingTerm,
         label: b.label,
         capacity: b.capacity,
@@ -143,31 +161,39 @@ export default function OnboardingPage() {
       }));
       if (locationInserts.length > 0) {
         const { error: locErr } = await supabase.from("locations").insert(locationInserts);
-        if (locErr) throw new Error(`Locations: ${locErr.message}`);
+        if (locErr) {
+          logStep("create_locations", "locations", locErr);
+          throw new Error(`Create locations: ${locErr.message}${locErr.hint ? ` (hint: ${locErr.hint})` : ""}`);
+        }
       }
 
-      // 4. Get created locations back (to link frogs)
-      const { data: createdLocs } = await supabase
+      // Step 4: Get created locations back (to link frogs)
+      setFailedStep("read_locations");
+      const { data: createdLocs, error: readLocErr } = await supabase
         .from("locations")
         .select("id, label, capacity")
-        .eq("organization_id", org.id)
+        .eq("organization_id", orgId)
         .order("label");
+      if (readLocErr) {
+        logStep("read_locations", "locations", readLocErr);
+        throw new Error(`Read locations: ${readLocErr.message}`);
+      }
       const locMap = new Map<string, string>();
       (createdLocs ?? []).forEach((l) => locMap.set(l.label, l.id));
 
-      // 5. Create frog records for populated bins
-      setFailedStep("Creating frog records...");
+      // Step 5: Create frog records for populated bins
+      setFailedStep("create_frogs");
       const frogInserts: { organization_id: string; public_code: string; sex: string; current_location_id: string; status: string }[] = [];
       let frogCounter = 1;
+      const codePrefix = `XT-${Date.now().toString(36).slice(-4).toUpperCase()}`;
       for (const b of bins) {
         if (b.startingFrogs > 0 && b.status !== "open" && b.status !== "closed") {
           const locId = locMap.get(b.label);
           if (!locId) continue;
           for (let f = 0; f < b.startingFrogs; f++) {
-            const code = `XT-${Date.now().toString(36).slice(-4).toUpperCase()}-${String(frogCounter).padStart(4, "0")}`;
             frogInserts.push({
-              organization_id: org.id,
-              public_code: code,
+              organization_id: orgId,
+              public_code: `${codePrefix}-${String(frogCounter).padStart(4, "0")}`,
               sex: frogSex,
               current_location_id: locId,
               status: "active",
@@ -177,18 +203,20 @@ export default function OnboardingPage() {
         }
       }
       if (frogInserts.length > 0) {
-        // Insert in batches of 100 to avoid payload limits
         for (let i = 0; i < frogInserts.length; i += 100) {
           const batch = frogInserts.slice(i, i + 100);
           const { error: frogErr } = await supabase.from("frogs").insert(batch);
-          if (frogErr) throw new Error(`Frogs (batch ${Math.floor(i / 100) + 1}): ${frogErr.message}`);
+          if (frogErr) {
+            logStep("create_frogs", "frogs", frogErr);
+            throw new Error(`Create frogs (batch ${Math.floor(i / 100) + 1}): ${frogErr.message}${frogErr.hint ? ` (hint: ${frogErr.hint})` : ""}`);
+          }
         }
       }
 
-      // 6. Rotation settings
-      setFailedStep("Creating rotation settings...");
+      // Step 6: Rotation settings
+      setFailedStep("create_rotation_settings");
       const { error: rotErr } = await supabase.from("rotation_settings").insert({
-        organization_id: org.id,
+        organization_id: orgId,
         minimum_rest_days: parseInt(restDays) || 90,
         target_rest_days: parseInt(restDays) || 90,
         overdue_after_days: parseInt(overdueAfter) || 135,
@@ -197,23 +225,29 @@ export default function OnboardingPage() {
         default_target_bin_capacity: parseInt(defaultCapacity) || 8,
         default_mode: labMode === "research" ? "extract" : labMode,
       });
-      if (rotErr) throw new Error(`Rotation settings: ${rotErr.message}`);
+      if (rotErr) {
+        logStep("create_rotation_settings", "rotation_settings", rotErr);
+        throw new Error(`Create rotation settings: ${rotErr.message}${rotErr.hint ? ` (hint: ${rotErr.hint})` : ""}`);
+      }
 
-      // 7. Notification rule (if email provided)
+      // Step 7: Notification rule (if email provided)
       if (notifyEmail) {
-        setFailedStep("Creating notification rule...");
+        setFailedStep("create_notification_rule");
         const { error: notifErr } = await supabase.from("notification_rules").insert({
-          organization_id: org.id,
+          organization_id: orgId,
           rule_type: "rest_complete",
           channel: "email",
           enabled: true,
           schedule: notifyEmail,
         });
-        if (notifErr) throw new Error(`Notification rule: ${notifErr.message}`);
+        if (notifErr) {
+          logStep("create_notification_rule", "notification_rules", notifErr);
+          throw new Error(`Create notification rule: ${notifErr.message}${notifErr.hint ? ` (hint: ${notifErr.hint})` : ""}`);
+        }
       }
 
-      // 8. Create bin_cycle_status for each location
-      setFailedStep("Initializing bin statuses...");
+      // Step 8: Create bin_cycle_status for each location
+      setFailedStep("create_bin_cycle_status");
       const binCycleInserts = [];
       for (const b of bins) {
         const locId = locMap.get(b.label);
@@ -228,12 +262,15 @@ export default function OnboardingPage() {
       }
       if (binCycleInserts.length > 0) {
         const { error: bcsErr } = await supabase.from("bin_cycle_status").insert(binCycleInserts);
-        if (bcsErr) throw new Error(`Bin cycle status: ${bcsErr.message}`);
+        if (bcsErr) {
+          logStep("create_bin_cycle_status", "bin_cycle_status", bcsErr);
+          throw new Error(`Create bin cycle status: ${bcsErr.message}${bcsErr.hint ? ` (hint: ${bcsErr.hint})` : ""}`);
+        }
       }
 
       window.location.href = "/dashboard";
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Setup failed.";
+      const msg = err instanceof Error ? err.message : "Unknown setup error.";
       setError(msg);
       setSaving(false);
     }
@@ -338,7 +375,7 @@ export default function OnboardingPage() {
             <div className="space-y-4">
               <h2 className="text-lg font-semibold text-gray-800">3. Name and configure each {housingTerm}</h2>
               <p className="text-sm text-gray-600">
-                Edit labels, set starting status, and adjust frog counts. Mark bins as &quot;Open&quot; if they should receive resting frogs.
+                Edit labels, set starting status, and adjust frog counts. Mark bins as &quot;Open&quot; if they should receive incoming orders or frogs returning from use.
               </p>
 
               {/* Quick actions */}

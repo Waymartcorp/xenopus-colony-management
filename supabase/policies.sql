@@ -86,6 +86,16 @@ alter table public.organizations enable row level security;
 create policy "org_select" on public.organizations
   for select using (public.is_org_member(id));
 
+-- Allow reading an org if the user just created it and membership exists
+-- (needed during onboarding sequence before is_org_member cache updates)
+create policy "org_select_by_membership" on public.organizations
+  for select using (
+    exists (
+      select 1 from public.organization_memberships
+      where organization_id = id and user_id = auth.uid()
+    )
+  );
+
 create policy "org_insert" on public.organizations
   for insert with check (true);
   -- Anyone authenticated can create an org (they become owner via trigger/app logic)
