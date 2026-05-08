@@ -85,16 +85,16 @@ export default function BinsPage() {
         </div>
         <div className="flex gap-2">
           <a
+            href="/use"
+            className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700"
+          >
+            Log Use & Rest
+          </a>
+          <a
             href="/setup"
             className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
           >
             + Add Bin
-          </a>
-          <a
-            href="/forecast"
-            className="rounded-lg border border-brand-300 px-4 py-2 text-sm font-medium text-brand-700 hover:bg-brand-50"
-          >
-            Calendar
           </a>
         </div>
       </div>

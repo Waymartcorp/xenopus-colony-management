@@ -66,27 +66,27 @@ export default function HomePage() {
           <div className="mt-12 grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
             <FeatureCard
               title="Track bins and frogs"
-              description="Organize your colony by bins, racks, and rooms. Every frog lives in a bin with a clear status."
+              description="Organize your colony by bins. Every frog lives in a bin with a clear status: available, resting, or ready."
             />
             <FeatureCard
-              title="Know what's resting or ready"
-              description="See at a glance which bins have completed rest, which are overdue, and which are next to use."
+              title="Log use and move to rest"
+              description="Record which frogs were used, from which bin, and move them to a rest bin with an automatic timer."
             />
             <FeatureCard
-              title="Plan repopulation"
-              description="Get recommendations for when bins need new frogs, and track where repopulation stock comes from."
+              title="Get notified when rest is complete"
+              description="The system tells you which bins are ready, how many frogs are available, and what to do next."
             />
             <FeatureCard
               title="Upload frog photos"
-              description="Build a structured photo archive attached to individual frogs, bins, or events. Searchable and permanent."
+              description="Build a photo archive for your colony. Attach photos to bins, frogs, or events."
             />
             <FeatureCard
               title="Track performance over time"
-              description="Log oocyte quality, extract yield, and other performance metrics. See trends across bins and seasons."
+              description="Log oocyte quality, extract yield, and use counts. See which bins perform best."
             />
             <FeatureCard
               title="Forecast and avoid bottlenecks"
-              description="Capacity planning, run-out prediction, and bottleneck detection so you never run short unexpectedly."
+              description="Know when you'll run short. Capacity planning and repopulation guidance built in."
             />
           </div>
         </div>

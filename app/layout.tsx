@@ -28,33 +28,29 @@ export default function RootLayout({
               </a>
             </div>
             <div className="flex flex-col gap-5 overflow-y-auto px-3 py-4">
-              {/* === BASE PRODUCT (always visible) === */}
-              <NavSection title="Colony">
-                <NavItem href="/dashboard" label="Today's Actions" />
-                <NavItem href="/bins" label="Bins & Rotation" />
+              {/* Core bin-cycling workflow */}
+              <NavSection title="Workflow">
+                <NavItem href="/dashboard" label="Dashboard" />
+                <NavItem href="/bins" label="Bins" />
+                <NavItem href="/use" label="Log Use & Rest" />
                 <NavItem href="/colony" label="Whole Colony" />
-                <NavItem href="/frogs" label="Individual Frogs" />
-                <NavItem href="/repopulation" label="Repopulation" />
-                <NavItem href="/locations" label="Rooms & Racks" />
-              </NavSection>
-              <NavSection title="Forecast">
-                <NavItem href="/forecast" label="Forecast" />
-                <NavItem href="/capacity" label="Capacity / Run-Out" />
-                <NavItem href="/bottlenecks" label="Bottlenecks" />
               </NavSection>
               <NavSection title="Records">
+                <NavItem href="/frogs" label="Frogs" />
                 <NavItem href="/events" label="Events" />
                 <NavItem href="/performance" label="Performance" />
                 <NavItem href="/photos" label="Photos" />
-                <NavItem href="/past" label="History" />
               </NavSection>
-              <NavSection title="System">
-                <NavItem href="/notifications" label="Notices" />
-                <NavItem href="/shipments" label="Shipments" />
+              <NavSection title="Planning">
+                <NavItem href="/forecast" label="Forecast" />
+                <NavItem href="/capacity" label="Capacity" />
+                <NavItem href="/repopulation" label="Repopulation" />
+                <NavItem href="/notifications" label="Notifications" />
+              </NavSection>
+              <NavSection title="Settings">
                 <NavItem href="/workspace-profile" label="Workspace" />
+                <NavItem href="/account" label="Account" />
               </NavSection>
-
-              {/* Future add-ons — not linked until we're ready to offer them */}
             </div>
           </nav>
           <div className="flex flex-1 flex-col overflow-y-auto">

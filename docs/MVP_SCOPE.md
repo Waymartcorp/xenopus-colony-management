@@ -1,112 +1,118 @@
 # MVP Scope
 
-## Build Now
+## Core Bin-Cycling Loop
 
-### Core Infrastructure
-- Private institution workspaces
-- Authentication (Supabase Auth)
-- Roles and permissions (owner, admin, manager, tech, viewer)
-- Organization-level lab mode and module settings
+The central XenoTrack workflow:
 
-### Frog Inventory
-- Manual frog creation with lifecycle states
-- Bulk import starter path
-- Frog cycle status tracking (available, resting, overdue, etc.)
-- Public codes and local IDs
-- Performance score and trend tracking
+```
+Populate bins → frogs acclimate → bins become ready →
+user logs use → used frogs move to rest bin →
+rest timer runs → notification sent when rest complete →
+frogs return to rotation or stay in rest bin for next use
+```
 
-### Housing / Locations
-- Hierarchical location tree (rooms, racks, bins, tanks, tubs)
-- Bin lifecycle states and capacity tracking
-- Bin cycle status (ready, resting, needs repopulation, overdue)
+### The user journey:
 
-### Rotation and Forecasting
-- Lab-configurable rotation settings (min rest, target rest, overdue threshold)
-- Automatic rest timers after use events
-- Rest-complete and overdue notifications
-- 30/60/90/120-day availability forecast
-- Next-use recommendations
-- Bin and frog status messages ("Resting — available Aug 30")
+1. Create account, log in
+2. Create lab/workspace
+3. Enter bins and frogs
+4. Set acclimation period, rest rules, notifications
+5. Bins become ready after acclimation
+6. Log use (choose source bin, count, type, date)
+7. Move used frogs to rest bin
+8. System starts rest timer
+9. System notifies when rest is complete
+10. Frogs are available again — repeat cycle
 
-### Repopulation Guidance
-- Bins needing repopulation with deficit counts
-- Eligible source frogs/bins
-- Performance-aware and compatibility-aware recommendations
-- Bulk assign, bulk log, bulk move, bulk repopulate
+---
 
-### Events and History
-- Event logging (use, rest, performance, health, movement, protocol)
-- Bin-level events applying to all frogs in bin
-- Past view timeline with filters
-- Outcome/result recording per event
+## Build Now (Base Product)
 
-### Performance Tracking
-- Per-frog and per-bin performance ratings (1–5 scale)
-- Quality labels (poor/fair/good/excellent)
-- Use count, average performance, trend
-- Do-not-use and retirement candidate flags
-- Protocol and result linking
+### Account & Onboarding
+- Supabase Auth signup/login
+- Terms acceptance
+- 10-step onboarding: workspace, housing term, bins, frogs, dates, acclimation, ready rule, photos, rest rules, notifications
 
-### Environmental Notes
-- Manual entry of water/room conditions
-- Linkable to rooms, racks, bins, events
-- Environmental observation history
+### Bin-Centered Colony Register
+- Bins as primary operating unit
+- Frog records inside bins
+- Bin status: available, resting, rest complete, overdue, needs repopulation
+- Frog count per bin, target count
+- Starting date, acclimation period, ready date
+
+### Use & Rest Cycling
+- Log use flow: select source bin, frog count, use type, date, performance note
+- Move to rest: choose or create destination rest bin
+- Rest timer starts automatically
+- Original bin keeps history of removal
+- Rest bin keeps record of which frogs arrived, from where, and when ready
 
 ### Notifications
-- Email (Resend/Postmark) and SMS (Twilio) architecture
-- In-app notifications
-- Rest-complete, overdue, repopulation, next-use alerts
-- Weekly colony summary
-- Notification preferences per user
+- Rest-complete notification
+- Overdue notification
+- Ready-to-return notification
+- Weekly summary (optional)
+- Email notifications (SMS future)
+- Configurable recipients per workspace
 
-### Visual Analytics
-- Dashboard stat cards and summary metrics
-- Placeholder chart components (line, bar, stacked, heatmap)
-- Performance dashboard
-- Seasonality dashboard placeholder
-- Rotation forecast charts placeholder
+### Performance Tracking
+- Per-use performance notes
+- Bin-level average performance
+- Use count per bin and frog
+- Performance trends over time
 
-### Photo Upload
-- Frog photo upload to Supabase Storage
-- Photo type categorization
-- Event/shipment photo attachments
+### Forecasting & Capacity
+- Which bins are resting and when they'll be ready
+- Run-out prediction
+- Bottleneck detection
+- Repopulation needs
 
-### Shipments
-- Xenopus 1 shipment preload and claim-link workflow
-- Shipment tracking and history
+### Photo Archive
+- Upload photos to bins, frogs, events
+- Private storage with signed URLs
+- Structured for future photo-ID tools
+- No biometric matching built yet
 
-### Workspace Profile
+### Whole Colony View
+- All bins with status indicators
+- Active/available frogs, resting frogs, ready frogs, overdue frogs
+- Bins available, bins resting, bins needing repopulation
+- Use counts and performance summaries
+
+### Reports & Time Views
+- Daily, weekly, monthly, yearly views (selectable)
+- Use events, rest completions, available/resting counts
+- Performance notes, repopulation needs, bottlenecks
+
+### Workspace Settings
 - Lab mode selection
-- Enabled modules configuration
-- Mode-specific dashboard and event templates
+- Housing terminology (bin/tank/tub)
+- Rotation settings (rest days, overdue threshold)
+- Notification recipients
 
-### Reports
-- CSV export placeholders
-- Summary report placeholders
-- Seasonal and performance report placeholders
+---
 
 ## Do Not Build Yet
 
 - Biometric matching / photo recognition
-- Motion-triggered camera station
-- Scale integration
-- Snout–vent length automation
-- Stripe billing
-- Full Frog Social integration
-- AI colony assistant beyond simple rule-based guidance
+- Frog Sentinel / husbandry module (future add-on)
+- Frog Social case linking (architecture only, not visible)
+- Billing / subscriptions
 - Hardware/sensor integrations
-- Automated water/environmental monitoring
+- AI colony assistant
+- Motion-triggered camera
+- Scale integration
+
+---
 
 ## MVP Success Criteria
 
-- 50 labs can each have private workspaces with configurable lab modes
-- A lab can manage 300–400 frogs and 50–75 bins without confusion
-- A tech can log an event in under 20 seconds
-- A lab manager can see which frogs/bins are ready, resting, overdue, or need review
-- The system forecasts availability at 30/60/90/120 days
-- Bulk actions work for bin-level use, rest, and repopulation
-- The system can send email/SMS updates for rest-complete and overdue alerts
-- Performance tracking shows trends over time
-- Environmental notes are recorded and linkable
-- Visual analytics placeholders are ready for chart integration
-- The schema supports future photo-recognition without migration chaos
+- A user can sign up, create bins, add frogs, and start the cycling loop in under 10 minutes
+- Logging use and moving to rest takes under 30 seconds
+- The system tracks rest timers and shows when bins are ready
+- The dashboard clearly shows: what's ready, what's resting, what's overdue
+- Notifications fire when rest is complete
+- The whole-colony view gives a snapshot of the entire colony state
+- Photos can be uploaded and stored as archive records
+- Performance notes accumulate over time with use counts
+- The user never feels lost — the app guides: bins → use → rest → notify → reuse
