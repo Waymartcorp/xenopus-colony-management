@@ -247,13 +247,18 @@ create table if not exists frog_photos (
   id uuid primary key default gen_random_uuid(),
   organization_id uuid not null references organizations(id) on delete cascade,
   frog_id uuid references frogs(id) on delete cascade,
-  image_url text not null,
+  location_id uuid references locations(id) on delete set null,
+  file_url text not null,
   thumbnail_url text,
+  media_type text not null default 'photo',
   photo_type text default 'general',
+  title text,
+  notes text,
   uploaded_by uuid,
   quality_status text,
   future_embedding_status text default 'not_started',
-  created_at timestamptz not null default now()
+  created_at timestamptz not null default now(),
+  constraint frog_photos_media_type_check check (media_type in ('photo', 'video'))
 );
 
 -- ============================================================
