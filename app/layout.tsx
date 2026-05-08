@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import UserHeader from "@/components/UserHeader";
+import { LogoLockup } from "@/components/Logo";
 
 export const metadata: Metadata = {
   title: "XenoTrack — Xenopus Colony Register",
@@ -20,9 +21,8 @@ export default function RootLayout({
           {/* Sidebar */}
           <nav className="hidden w-60 flex-shrink-0 border-r border-gray-200/80 bg-white lg:flex lg:flex-col">
             <div className="flex h-14 items-center border-b border-gray-100 px-5">
-              <a href="/dashboard" className="flex items-center gap-2">
-                <span className="flex h-7 w-7 items-center justify-center rounded-md bg-brand-600 text-xs font-bold text-white">X</span>
-                <span className="text-sm font-bold tracking-tight text-gray-900">XenoTrack</span>
+              <a href="/dashboard">
+                <LogoLockup size={24} />
               </a>
             </div>
             <div className="flex flex-1 flex-col gap-6 overflow-y-auto px-3 py-5">

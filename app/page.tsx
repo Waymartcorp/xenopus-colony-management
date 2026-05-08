@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { LogoLockup } from "@/components/Logo";
 
 export default function HomePage() {
   return (
@@ -6,12 +7,7 @@ export default function HomePage() {
       {/* Nav */}
       <header className="sticky top-0 z-50 border-b border-gray-100 bg-white/80 backdrop-blur-md">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <div className="flex items-center gap-2">
-            <div className="flex h-7 w-7 items-center justify-center rounded-md bg-brand-600">
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1" y="1" width="5" height="5" rx="1" fill="white" opacity="0.9"/><rect x="8" y="1" width="5" height="5" rx="1" fill="white" opacity="0.5"/><rect x="1" y="8" width="5" height="5" rx="1" fill="white" opacity="0.5"/><rect x="8" y="8" width="5" height="5" rx="1" fill="white" opacity="0.9"/></svg>
-            </div>
-            <span className="text-lg font-bold tracking-tight text-gray-900">XenoTrack</span>
-          </div>
+          <LogoLockup size={28} />
           <div className="flex items-center gap-3">
             <Link href="/login" className="text-sm font-medium text-gray-600 transition-colors hover:text-gray-900">
               Log in

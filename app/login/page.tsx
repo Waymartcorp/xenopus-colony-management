@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { signIn } from "@/lib/auth";
+import { LogoFull } from "@/components/Logo";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -31,12 +32,12 @@ export default function LoginPage() {
       <div className="pattern-dots absolute inset-0" />
       <div className="relative w-full max-w-sm">
         <div className="text-center">
-          <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-lg bg-brand-600 text-sm font-bold text-white">X</div>
-          <h1 className="mt-4 text-2xl font-bold tracking-tight text-gray-900">
-            Sign in to XenoTrack
+          <LogoFull />
+          <h1 className="mt-6 text-xl font-bold tracking-tight text-gray-900">
+            Sign in
           </h1>
-          <p className="mt-2 text-sm text-gray-600">
-            Access your colony workspace.
+          <p className="mt-1 text-sm text-gray-500">
+            Access your colony workspace
           </p>
         </div>
 
