@@ -10,16 +10,28 @@ const config: Config = {
     extend: {
       colors: {
         brand: {
-          50: "#f0faf6",
-          100: "#d6f2e4",
-          200: "#b0e5cc",
-          300: "#7dd3af",
-          400: "#4aba8e",
-          500: "#2d9d72",
-          600: "#1f7f5c",
-          700: "#1a664b",
-          800: "#17503d",
-          900: "#133f32",
+          50: "#f5f7fa",
+          100: "#e4e9f0",
+          200: "#c9d3e1",
+          300: "#a3b3c9",
+          400: "#7690ad",
+          500: "#536f92",
+          600: "#3d5577",
+          700: "#334563",
+          800: "#2b3a52",
+          900: "#1e2a3d",
+        },
+        gold: {
+          50: "#fffbeb",
+          100: "#fef3c7",
+          200: "#fde68a",
+          300: "#fcd34d",
+          400: "#cfae45",
+          500: "#b8972e",
+          600: "#a07c1c",
+          700: "#866618",
+          800: "#6b5114",
+          900: "#4d3b0f",
         },
       },
       fontFamily: {
@@ -33,7 +45,7 @@ const config: Config = {
       boxShadow: {
         card: "0 1px 3px 0 rgb(0 0 0 / 0.04), 0 1px 2px -1px rgb(0 0 0 / 0.04)",
         "card-hover": "0 4px 12px 0 rgb(0 0 0 / 0.06), 0 2px 4px -2px rgb(0 0 0 / 0.04)",
-        glow: "0 0 20px 0 rgb(45 157 114 / 0.12)",
+        glow: "0 0 20px 0 rgb(83 111 146 / 0.12)",
       },
       animation: {
         "fade-in": "fadeIn 0.5s ease-out",

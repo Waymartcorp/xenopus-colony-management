@@ -34,7 +34,7 @@ export default function HomePage() {
               style={{
                 width: `${6 + (i % 4) * 3}px`,
                 height: `${6 + (i % 4) * 3}px`,
-                background: ["#0d9488", "#2563eb", "#d97706", "#16a34a", "#6366f1", "#0d9488"][i % 6],
+                background: ["#536f92", "#3d5577", "#cfae45", "#7690ad", "#6366f1", "#b8972e"][i % 6],
                 left: `${3 + (i * 5) % 94}%`,
                 top: `${8 + (i * 7) % 80}%`,
                 opacity: 0.15 + (i % 3) * 0.1,
@@ -46,13 +46,14 @@ export default function HomePage() {
         </div>
 
         {/* Radial glow */}
-        <div className="absolute left-1/2 top-0 -translate-x-1/2 h-[500px] w-[800px] rounded-full bg-gradient-to-b from-brand-100/50 to-transparent blur-3xl" />
+        <div className="absolute left-1/2 top-0 -translate-x-1/2 h-[500px] w-[800px] rounded-full bg-gradient-to-b from-brand-100/60 to-transparent blur-3xl" />
 
         <div className="relative mx-auto max-w-5xl px-6 py-14 text-center sm:py-16">
           <div className="animate-in">
             <h1 className="text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl lg:text-6xl">
               Xenopus frog use workflow
             </h1>
+            <div className="mx-auto mt-3 h-1 w-16 rounded-full bg-gold-400" />
             <p className="mx-auto mt-5 max-w-2xl text-lg leading-relaxed text-gray-600">
               XenoTrack is a colony register and tank-based handling system with rest timers
               that maintains system continuity and institutional knowledge.
@@ -134,7 +135,7 @@ export default function HomePage() {
               description="Log use and the system recommends a destination bin. Source and destination are permanently linked."
             />
             <FeatureCard
-              color="green"
+              color="gold"
               title="Know which frogs are really rested"
               description="Rest timers are calculated from actual use dates. No guessing — the system tells you what's ready."
             />
@@ -149,7 +150,7 @@ export default function HomePage() {
               description="Colony calculator uses your real usage data to predict shortage dates and safe ordering capacity."
             />
             <FeatureCard
-              color="teal"
+              color="gold"
               title="Take the guesswork out of rest-bin placement"
               description="XenoTrack recommends which bin to place used frogs in. Confirms placement. Tracks the rest cohort."
             />
@@ -167,9 +168,9 @@ export default function HomePage() {
             Each bin has a live status. Know what&apos;s ready, what&apos;s resting, and what needs attention.
           </p>
           <div className="mt-10 flex flex-wrap justify-center gap-3">
-            <StatusChip label="Ready for use" color="green" />
+            <StatusChip label="Ready for use" color="gold" />
             <StatusChip label="Resting (day 42/90)" color="blue" />
-            <StatusChip label="Open — receiving" color="emerald" />
+            <StatusChip label="Open — receiving" color="brand" />
             <StatusChip label="Occupied" color="gray" />
             <StatusChip label="Overdue" color="red" />
             <StatusChip label="GP Source" color="purple" />
@@ -232,10 +233,9 @@ function FeatureCard({ title, description, color }: { title: string; description
   const colors: Record<string, string> = {
     brand: "border-l-brand-400",
     blue: "border-l-blue-400",
-    green: "border-l-green-400",
+    gold: "border-l-gold-400",
     purple: "border-l-purple-400",
     amber: "border-l-amber-400",
-    teal: "border-l-teal-400",
   };
   return (
     <div className={`card-flat border-l-4 p-5 transition-shadow hover:shadow-card-hover ${colors[color] ?? colors.brand}`}>
@@ -247,9 +247,9 @@ function FeatureCard({ title, description, color }: { title: string; description
 
 function StatusChip({ label, color }: { label: string; color: string }) {
   const colors: Record<string, string> = {
-    green: "bg-green-100 text-green-700 border-green-200",
+    gold: "bg-gold-100 text-gold-700 border-gold-200",
     blue: "bg-blue-100 text-blue-700 border-blue-200",
-    emerald: "bg-emerald-100 text-emerald-700 border-emerald-200",
+    brand: "bg-brand-100 text-brand-700 border-brand-200",
     gray: "bg-gray-100 text-gray-600 border-gray-200",
     red: "bg-red-100 text-red-700 border-red-200",
     purple: "bg-purple-100 text-purple-700 border-purple-200",
@@ -286,109 +286,157 @@ function ReadyIcon() {
 }
 
 function BinMovementGraphic() {
+  const bins = [
+    { x: 60, label: "Populated", fill: "#536f92", dots: 5 },
+    { x: 210, label: "In Use", fill: "#7690ad", dots: 2 },
+    { x: 360, label: "Resting", fill: "#cfae45", dots: 4 },
+    { x: 510, label: "Ready", fill: "#b8972e", dots: 5 },
+  ];
+
+  const arcs = [
+    { from: 60, to: 210, color: "#536f92", delay: 0 },
+    { from: 210, to: 360, color: "#7690ad", delay: 0.6 },
+    { from: 360, to: 510, color: "#cfae45", delay: 1.2 },
+  ];
+
   return (
-    <div className="relative mx-auto max-w-2xl rounded-2xl border border-gray-200/60 bg-white/70 px-6 py-8 shadow-lg backdrop-blur-sm">
-      {/* Floating particles across the whole graphic */}
+    <div className="relative mx-auto max-w-2xl rounded-2xl border border-gray-200/60 bg-white/70 p-6 shadow-lg backdrop-blur-sm">
+      {/* Floating ambient particles */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-2xl">
-        {Array.from({ length: 12 }).map((_, i) => (
+        {Array.from({ length: 10 }).map((_, i) => (
           <div
             key={i}
             className="absolute rounded-full"
             style={{
-              width: `${4 + (i % 3) * 2}px`,
-              height: `${4 + (i % 3) * 2}px`,
-              background: ["#0d9488", "#2563eb", "#d97706", "#16a34a", "#0d9488", "#6366f1"][i % 6],
-              left: `${5 + i * 8}%`,
-              top: `${20 + Math.sin(i * 0.9) * 30}%`,
-              opacity: 0.5,
-              animation: `float-particle ${2.5 + i * 0.3}s ease-in-out infinite alternate`,
-              animationDelay: `${i * 0.25}s`,
+              width: `${3 + (i % 3) * 2}px`,
+              height: `${3 + (i % 3) * 2}px`,
+              background: ["#536f92", "#7690ad", "#cfae45", "#3d5577", "#b8972e"][i % 5],
+              left: `${8 + i * 9}%`,
+              top: `${15 + Math.sin(i * 1.1) * 25}%`,
+              opacity: 0.4,
+              animation: `float-particle ${2.5 + i * 0.4}s ease-in-out infinite alternate`,
+              animationDelay: `${i * 0.3}s`,
             }}
           />
         ))}
       </div>
 
-      {/* Bins row with arrows */}
-      <div className="relative flex items-center justify-between gap-2">
-        <AnimatedBin label="Populated" color="brand" dotCount={6} dotColor="bg-brand-500" />
-        <FlowArrowAnimated color="#0d9488" />
-        <AnimatedBin label="In Use" color="blue" dotCount={2} dotColor="bg-blue-500" pulsing />
-        <FlowArrowAnimated color="#2563eb" />
-        <AnimatedBin label="Resting" color="amber" dotCount={4} dotColor="bg-amber-500" />
-        <FlowArrowAnimated color="#16a34a" />
-        <AnimatedBin label="Ready" color="green" dotCount={5} dotColor="bg-green-500" />
-      </div>
+      <svg viewBox="0 0 570 180" className="relative w-full" style={{ maxHeight: "180px" }}>
+        {/* Arc paths between bins */}
+        {arcs.map((arc, i) => {
+          const midX = (arc.from + arc.to) / 2;
+          return (
+            <g key={i}>
+              <path
+                d={`M ${arc.from + 25} 90 Q ${midX} 30 ${arc.to - 25} 90`}
+                fill="none"
+                stroke={arc.color}
+                strokeWidth="1.5"
+                strokeDasharray="4 3"
+                opacity="0.4"
+              />
+              {/* Traveling dots along arc */}
+              {[0, 1, 2].map((dotIdx) => (
+                <circle key={dotIdx} r="3.5" fill={arc.color} opacity="0.8">
+                  <animateMotion
+                    dur={`${2.2 + dotIdx * 0.3}s`}
+                    repeatCount="indefinite"
+                    begin={`${arc.delay + dotIdx * 0.7}s`}
+                    path={`M ${arc.from + 25} 90 Q ${midX} 30 ${arc.to - 25} 90`}
+                  />
+                </circle>
+              ))}
+            </g>
+          );
+        })}
 
-      {/* Return cycle indicator */}
-      <div className="mt-4 flex items-center justify-center">
+        {/* Return arc (bottom, Ready → Populated) */}
+        <path
+          d="M 510 110 Q 285 200 60 110"
+          fill="none"
+          stroke="#b8972e"
+          strokeWidth="1.5"
+          strokeDasharray="4 3"
+          opacity="0.3"
+        />
+        {[0, 1].map((dotIdx) => (
+          <circle key={`ret-${dotIdx}`} r="3" fill="#b8972e" opacity="0.7">
+            <animateMotion
+              dur={`${3.5 + dotIdx * 0.5}s`}
+              repeatCount="indefinite"
+              begin={`${dotIdx * 1.5}s`}
+              path="M 510 110 Q 285 200 60 110"
+            />
+          </circle>
+        ))}
+
+        {/* Bin containers */}
+        {bins.map((bin, i) => (
+          <g key={i}>
+            <rect
+              x={bin.x - 25}
+              y="65"
+              width="50"
+              height="50"
+              rx="10"
+              fill="white"
+              stroke={bin.fill}
+              strokeWidth="2"
+              opacity="0.9"
+            />
+            {/* Dots inside bins */}
+            {Array.from({ length: bin.dots }).map((_, d) => {
+              const col = d % 3;
+              const row = Math.floor(d / 3);
+              return (
+                <circle
+                  key={d}
+                  cx={bin.x - 12 + col * 12}
+                  cy={82 + row * 12}
+                  r="3.5"
+                  fill={bin.fill}
+                  opacity="0.85"
+                >
+                  <animate
+                    attributeName="opacity"
+                    values="0.85;0.5;0.85"
+                    dur={`${1.5 + d * 0.2}s`}
+                    begin={`${d * 0.3}s`}
+                    repeatCount="indefinite"
+                  />
+                </circle>
+              );
+            })}
+            <text
+              x={bin.x}
+              y="138"
+              textAnchor="middle"
+              fontSize="11"
+              fontWeight="600"
+              fill="#4b5563"
+            >
+              {bin.label}
+            </text>
+          </g>
+        ))}
+      </svg>
+
+      {/* Cycle badge and legend */}
+      <div className="mt-3 flex items-center justify-center">
         <div className="flex items-center gap-2 rounded-full border border-brand-200 bg-brand-50 px-4 py-1.5">
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="animate-spin-slow">
-            <path d="M7 1a6 6 0 105.2 3" stroke="#0d9488" strokeWidth="1.5" strokeLinecap="round"/>
-            <path d="M12.2 1v3h-3" stroke="#0d9488" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M7 1a6 6 0 105.2 3" stroke="#536f92" strokeWidth="1.5" strokeLinecap="round"/>
+            <path d="M12.2 1v3h-3" stroke="#536f92" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
           <span className="text-xs font-medium text-brand-700">Continuous rotation cycle</span>
         </div>
       </div>
-
-      {/* Legend */}
-      <div className="mt-4 flex flex-wrap justify-center gap-4 text-[11px] text-gray-500">
+      <div className="mt-3 flex flex-wrap justify-center gap-4 text-[11px] text-gray-500">
         <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-brand-500" />population</span>
-        <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-blue-500" />use event</span>
-        <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-amber-500" />rest cycle</span>
-        <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-green-500" />ready</span>
+        <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-brand-400" />use event</span>
+        <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-gold-400" />rest cycle</span>
+        <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-gold-500" />ready</span>
       </div>
-    </div>
-  );
-}
-
-function FlowArrowAnimated({ color }: { color: string }) {
-  return (
-    <div className="flex flex-col items-center gap-0.5">
-      <svg width="32" height="12" viewBox="0 0 32 12" fill="none">
-        <path d="M0 6h24M20 2l6 4-6 4" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" strokeDasharray="3 2" className="animate-dash" opacity="0.7" />
-      </svg>
-      {/* Moving dot along arrow */}
-      <div
-        className="h-1.5 w-1.5 rounded-full"
-        style={{
-          background: color,
-          animation: "dot-travel 1.8s ease-in-out infinite",
-        }}
-      />
-    </div>
-  );
-}
-
-function AnimatedBin({ label, color, dotCount, dotColor, pulsing }: {
-  label: string;
-  color: "brand" | "blue" | "amber" | "green";
-  dotCount: number;
-  dotColor: string;
-  pulsing?: boolean;
-}) {
-  const borderColors = {
-    brand: "border-brand-300 bg-gradient-to-b from-brand-50 to-brand-100/60",
-    blue: "border-blue-300 bg-gradient-to-b from-blue-50 to-blue-100/60",
-    amber: "border-amber-300 bg-gradient-to-b from-amber-50 to-amber-100/60",
-    green: "border-green-300 bg-gradient-to-b from-green-50 to-green-100/60",
-  };
-  return (
-    <div className="relative flex flex-col items-center">
-      <div className={`relative flex h-20 w-20 items-center justify-center rounded-2xl border-2 shadow-sm ${borderColors[color]} ${pulsing ? "animate-pulse-soft" : ""} transition-transform hover:scale-110`}>
-        <div className="grid grid-cols-3 gap-1 p-2">
-          {Array.from({ length: dotCount }).map((_, i) => (
-            <div
-              key={i}
-              className={`h-2.5 w-2.5 rounded-full ${dotColor} shadow-sm`}
-              style={{
-                animation: `dot-bob ${1.2 + i * 0.15}s ease-in-out infinite alternate`,
-                animationDelay: `${i * 0.12}s`,
-              }}
-            />
-          ))}
-        </div>
-      </div>
-      <span className="mt-2 text-xs font-semibold text-gray-600">{label}</span>
     </div>
   );
 }
