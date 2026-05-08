@@ -64,9 +64,21 @@ export default function UserHeader() {
             </>
           )}
         </div>
-        <a href="/account" className="text-xs font-medium text-gray-400 transition-colors hover:text-gray-700">
-          Account
-        </a>
+        <div className="flex items-center gap-3">
+          <a href="/account" className="text-xs font-medium text-gray-400 transition-colors hover:text-gray-700">
+            Account
+          </a>
+          <button
+            onClick={async () => {
+              const supabase = createBrowserSupabaseClient();
+              await supabase.auth.signOut();
+              window.location.href = "/";
+            }}
+            className="text-xs font-medium text-red-400 transition-colors hover:text-red-600"
+          >
+            Sign Out
+          </button>
+        </div>
       </div>
     </div>
   );

@@ -29,7 +29,7 @@ export default function HomePage() {
         <div className="pattern-grid absolute inset-0" />
         <div className="absolute left-1/2 top-0 -translate-x-1/2 h-[600px] w-[900px] rounded-full bg-gradient-to-b from-brand-100/40 to-transparent blur-3xl" />
 
-        <div className="relative mx-auto max-w-5xl px-6 py-24 text-center sm:py-32">
+        <div className="relative mx-auto max-w-5xl px-6 py-16 text-center sm:py-20">
           <div className="animate-in">
             <div className="mx-auto mb-6 flex items-center justify-center gap-1.5">
               {/* Mini bin icons suggesting colony structure */}
@@ -274,62 +274,74 @@ function ReadyIcon() {
 
 function BinMovementGraphic() {
   return (
-    <div className="relative mx-auto max-w-3xl">
-      {/* Connection lines */}
-      <svg className="absolute inset-0 h-full w-full" viewBox="0 0 600 160" fill="none" preserveAspectRatio="xMidYMid meet">
-        {/* Path from populated to use */}
-        <path d="M120 80 L200 80" stroke="url(#flow1)" strokeWidth="2" strokeDasharray="4 4" className="animate-dash" />
-        {/* Path from use to rest */}
-        <path d="M280 80 L370 80" stroke="url(#flow2)" strokeWidth="2" strokeDasharray="4 4" className="animate-dash" />
-        {/* Path from rest back to ready */}
-        <path d="M450 80 L530 80" stroke="url(#flow3)" strokeWidth="2" strokeDasharray="4 4" className="animate-dash" />
-        {/* Return arc */}
-        <path d="M530 65 C560 20, 40 20, 70 65" stroke="url(#flow4)" strokeWidth="1.5" strokeDasharray="3 3" fill="none" className="animate-dash-slow" />
-        {/* Gradients */}
-        <defs>
-          <linearGradient id="flow1" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stopColor="#0d9488" stopOpacity="0.3"/><stop offset="100%" stopColor="#0d9488" stopOpacity="0.8"/></linearGradient>
-          <linearGradient id="flow2" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stopColor="#2563eb" stopOpacity="0.3"/><stop offset="100%" stopColor="#2563eb" stopOpacity="0.8"/></linearGradient>
-          <linearGradient id="flow3" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stopColor="#16a34a" stopOpacity="0.3"/><stop offset="100%" stopColor="#16a34a" stopOpacity="0.8"/></linearGradient>
-          <linearGradient id="flow4" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stopColor="#0d9488" stopOpacity="0.2"/><stop offset="100%" stopColor="#0d9488" stopOpacity="0.5"/></linearGradient>
-        </defs>
-      </svg>
-
-      {/* Bins and dots */}
-      <div className="relative flex items-center justify-between px-4 py-8">
-        {/* Populated bin */}
-        <AnimatedBin label="Populated" color="brand" dotCount={5} dotColor="bg-brand-400" />
-        {/* Use event */}
-        <AnimatedBin label="In Use" color="blue" dotCount={2} dotColor="bg-blue-400" pulsing />
-        {/* Rest bin */}
-        <AnimatedBin label="Resting" color="amber" dotCount={3} dotColor="bg-amber-400" />
-        {/* Ready bin */}
-        <AnimatedBin label="Ready" color="green" dotCount={4} dotColor="bg-green-400" />
-      </div>
-
-      {/* Floating particles - data flow indicators */}
-      <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        {Array.from({ length: 8 }).map((_, i) => (
+    <div className="relative mx-auto max-w-2xl rounded-2xl border border-gray-200/60 bg-white/70 px-6 py-8 shadow-lg backdrop-blur-sm">
+      {/* Floating particles across the whole graphic */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-2xl">
+        {Array.from({ length: 12 }).map((_, i) => (
           <div
             key={i}
-            className="absolute h-1.5 w-1.5 rounded-full opacity-60"
+            className="absolute rounded-full"
             style={{
-              background: ["#0d9488", "#2563eb", "#d97706", "#16a34a"][i % 4],
-              left: `${10 + i * 12}%`,
-              top: `${35 + Math.sin(i * 1.2) * 20}%`,
-              animation: `float-particle ${3 + i * 0.4}s ease-in-out infinite alternate`,
-              animationDelay: `${i * 0.3}s`,
+              width: `${4 + (i % 3) * 2}px`,
+              height: `${4 + (i % 3) * 2}px`,
+              background: ["#0d9488", "#2563eb", "#d97706", "#16a34a", "#0d9488", "#6366f1"][i % 6],
+              left: `${5 + i * 8}%`,
+              top: `${20 + Math.sin(i * 0.9) * 30}%`,
+              opacity: 0.5,
+              animation: `float-particle ${2.5 + i * 0.3}s ease-in-out infinite alternate`,
+              animationDelay: `${i * 0.25}s`,
             }}
           />
         ))}
       </div>
 
-      {/* Legend */}
-      <div className="mt-4 flex justify-center gap-4 text-[10px] text-gray-400">
-        <span className="flex items-center gap-1"><span className="h-1.5 w-1.5 rounded-full bg-brand-400" />population</span>
-        <span className="flex items-center gap-1"><span className="h-1.5 w-1.5 rounded-full bg-blue-400" />use event</span>
-        <span className="flex items-center gap-1"><span className="h-1.5 w-1.5 rounded-full bg-amber-400" />rest cycle</span>
-        <span className="flex items-center gap-1"><span className="h-1.5 w-1.5 rounded-full bg-green-400" />ready</span>
+      {/* Bins row with arrows */}
+      <div className="relative flex items-center justify-between gap-2">
+        <AnimatedBin label="Populated" color="brand" dotCount={6} dotColor="bg-brand-500" />
+        <FlowArrowAnimated color="#0d9488" />
+        <AnimatedBin label="In Use" color="blue" dotCount={2} dotColor="bg-blue-500" pulsing />
+        <FlowArrowAnimated color="#2563eb" />
+        <AnimatedBin label="Resting" color="amber" dotCount={4} dotColor="bg-amber-500" />
+        <FlowArrowAnimated color="#16a34a" />
+        <AnimatedBin label="Ready" color="green" dotCount={5} dotColor="bg-green-500" />
       </div>
+
+      {/* Return cycle indicator */}
+      <div className="mt-4 flex items-center justify-center">
+        <div className="flex items-center gap-2 rounded-full border border-brand-200 bg-brand-50 px-4 py-1.5">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="animate-spin-slow">
+            <path d="M7 1a6 6 0 105.2 3" stroke="#0d9488" strokeWidth="1.5" strokeLinecap="round"/>
+            <path d="M12.2 1v3h-3" stroke="#0d9488" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+          <span className="text-xs font-medium text-brand-700">Continuous rotation cycle</span>
+        </div>
+      </div>
+
+      {/* Legend */}
+      <div className="mt-4 flex flex-wrap justify-center gap-4 text-[11px] text-gray-500">
+        <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-brand-500" />population</span>
+        <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-blue-500" />use event</span>
+        <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-amber-500" />rest cycle</span>
+        <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-green-500" />ready</span>
+      </div>
+    </div>
+  );
+}
+
+function FlowArrowAnimated({ color }: { color: string }) {
+  return (
+    <div className="flex flex-col items-center gap-0.5">
+      <svg width="32" height="12" viewBox="0 0 32 12" fill="none">
+        <path d="M0 6h24M20 2l6 4-6 4" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" strokeDasharray="3 2" className="animate-dash" opacity="0.7" />
+      </svg>
+      {/* Moving dot along arrow */}
+      <div
+        className="h-1.5 w-1.5 rounded-full"
+        style={{
+          background: color,
+          animation: "dot-travel 1.8s ease-in-out infinite",
+        }}
+      />
     </div>
   );
 }
@@ -342,29 +354,28 @@ function AnimatedBin({ label, color, dotCount, dotColor, pulsing }: {
   pulsing?: boolean;
 }) {
   const borderColors = {
-    brand: "border-brand-300 bg-brand-50/80",
-    blue: "border-blue-300 bg-blue-50/80",
-    amber: "border-amber-300 bg-amber-50/80",
-    green: "border-green-300 bg-green-50/80",
+    brand: "border-brand-300 bg-gradient-to-b from-brand-50 to-brand-100/60",
+    blue: "border-blue-300 bg-gradient-to-b from-blue-50 to-blue-100/60",
+    amber: "border-amber-300 bg-gradient-to-b from-amber-50 to-amber-100/60",
+    green: "border-green-300 bg-gradient-to-b from-green-50 to-green-100/60",
   };
   return (
     <div className="relative flex flex-col items-center">
-      <div className={`relative flex h-16 w-16 items-center justify-center rounded-xl border-2 ${borderColors[color]} ${pulsing ? "animate-pulse-soft" : ""} transition-transform hover:scale-110`}>
-        {/* Dots inside bin representing frogs */}
-        <div className="flex flex-wrap items-center justify-center gap-0.5 p-1">
+      <div className={`relative flex h-20 w-20 items-center justify-center rounded-2xl border-2 shadow-sm ${borderColors[color]} ${pulsing ? "animate-pulse-soft" : ""} transition-transform hover:scale-110`}>
+        <div className="grid grid-cols-3 gap-1 p-2">
           {Array.from({ length: dotCount }).map((_, i) => (
             <div
               key={i}
-              className={`h-2 w-2 rounded-full ${dotColor}`}
+              className={`h-2.5 w-2.5 rounded-full ${dotColor} shadow-sm`}
               style={{
-                animation: `dot-bob ${1.5 + i * 0.2}s ease-in-out infinite alternate`,
-                animationDelay: `${i * 0.15}s`,
+                animation: `dot-bob ${1.2 + i * 0.15}s ease-in-out infinite alternate`,
+                animationDelay: `${i * 0.12}s`,
               }}
             />
           ))}
         </div>
       </div>
-      <span className="mt-2 text-[10px] font-medium text-gray-500">{label}</span>
+      <span className="mt-2 text-xs font-semibold text-gray-600">{label}</span>
     </div>
   );
 }
