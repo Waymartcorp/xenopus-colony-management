@@ -3,9 +3,9 @@ import "./globals.css";
 import UserHeader from "@/components/UserHeader";
 
 export const metadata: Metadata = {
-  title: "XenoTrack Colony Register",
+  title: "XenoTrack — Xenopus Colony Register",
   description:
-    "Private Xenopus colony management — track bins, frogs, use/rest cycles, and performance.",
+    "A private colony register for bins, frogs, use/rest cycles, rest-bin assignment, performance history, and long-term colony records.",
 };
 
 export default function RootLayout({
@@ -36,13 +36,12 @@ export default function RootLayout({
                 <NavItem href="/frogs" label="Frogs" icon="●" />
                 <NavItem href="/events" label="Events" icon="◆" />
                 <NavItem href="/performance" label="Performance" icon="◈" />
-                <NavItem href="/photos" label="Photos" icon="◲" />
+                <NavItem href="/photos" label="Photos & Video" icon="◲" />
               </NavSection>
               <NavSection title="Planning">
                 <NavItem href="/calculator" label="Colony Calculator" icon="⊞" accent />
                 <NavItem href="/planner" label="Cycle Planner" icon="▦" />
-                <NavItem href="/forecast" label="Forecast" icon="▷" />
-                <NavItem href="/repopulation" label="Repopulation" icon="⊕" />
+                <NavItem href="/reports" label="Reports & Export" icon="⊡" />
                 <NavItem href="/notifications" label="Notifications" icon="◎" />
               </NavSection>
               <div className="mt-auto border-t border-gray-100 pt-4">

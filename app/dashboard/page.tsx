@@ -90,13 +90,13 @@ export default function DashboardPage() {
       <div className="p-6 lg:p-10">
         <h1 className="page-header">Colony Dashboard</h1>
         <EmptyState
-          title="Start by creating your bins"
-          description="Define your housing structure first. Then add frogs, set rest rules, and start tracking the colony."
+          title="No colony data yet"
+          description="Run the guided setup to define your bins, add frogs, and configure rest rules. This takes about 2 minutes."
           actions={[
             { href: "/onboarding", label: "Set up colony", primary: true },
-            { href: "/bins/new", label: "Create bins" },
           ]}
         />
+        <HowItWorks />
       </div>
     );
   }
@@ -106,14 +106,13 @@ export default function DashboardPage() {
     return (
       <div className="p-6 lg:p-10">
         <h1 className="page-header">Colony Dashboard</h1>
-        <p className="page-subtitle">{state.binCount} bins created</p>
+        <p className="page-subtitle">{state.binCount} bin{state.binCount !== 1 ? "s" : ""} defined — no frogs registered yet</p>
         <EmptyState
-          title="Your bins are ready. Add frogs to begin tracking."
-          description="Assign frogs to bins so the system can track use, rest, and readiness."
+          title="Add frogs to your bins"
+          description="Assign frog counts or individual frogs to each bin. This is what XenoTrack will track through use/rest cycles."
           actions={[
-            { href: "/frogs/add", label: "Add frogs by count", primary: true },
-            { href: "/frogs/add", label: "Add individual frogs" },
-            { href: "/photos", label: "Upload bin photos" },
+            { href: "/frogs/add", label: "Add frogs", primary: true },
+            { href: "/bins", label: "View bins" },
           ]}
         />
       </div>
@@ -125,16 +124,16 @@ export default function DashboardPage() {
     return (
       <div className="p-6 lg:p-10">
         <h1 className="page-header">Colony Dashboard</h1>
-        <p className="page-subtitle">{state.binCount} bins · {state.frogCount} frogs · {state.openBins} open for rest</p>
+        <p className="page-subtitle">{state.binCount} bins · {state.frogCount} frogs registered</p>
         <EmptyState
-          title="Your colony is populated. Log first use when frogs are taken from a bin."
-          description="When frogs are used, log the event and XenoTrack recommends a destination rest bin. The system tracks rest timers and notifies you when frogs are ready."
+          title="Colony is set up — ready to log use"
+          description="When frogs are taken from a bin, log the use event. XenoTrack will recommend a destination rest bin and start the rest timer automatically."
           actions={[
             { href: "/use", label: "Log use from bin", primary: true },
-            { href: "/planner", label: "Use Cycle Planner" },
             { href: "/bins", label: "View bins" },
           ]}
         />
+        <HowItWorks />
       </div>
     );
   }
@@ -198,17 +197,17 @@ export default function DashboardPage() {
         </div>
       </section>
 
-      {/* PI Summary — Colony Reality Check */}
+      {/* Colony Summary */}
       <section className="mt-8">
         <div className="flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-gray-800">Colony Reality Check</h2>
-          <a href="/calculator" className="text-xs font-medium text-brand-600 hover:text-brand-700">Full calculator →</a>
+          <h2 className="text-sm font-semibold text-gray-800">Colony Summary</h2>
+          <a href="/calculator" className="text-xs font-medium text-brand-600 hover:text-brand-700">Calculator →</a>
         </div>
         <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
           <RealityItem
-            label="Frogs actually available"
-            value={`${state.frogCount - state.restingBins * 6}`}
-            note="Active frogs not currently resting"
+            label="Total frogs on record"
+            value={`${state.frogCount}`}
+            note="All frogs registered in this workspace"
           />
           <RealityItem
             label="Bins needing attention"
@@ -217,10 +216,9 @@ export default function DashboardPage() {
             warning={state.overdueBins > 0}
           />
           <RealityItem
-            label="Open rest capacity"
-            value={`${state.openBins} bins`}
-            note={state.openBins < 5 ? "Low — may bottleneck soon" : "Sufficient for current use"}
-            warning={state.openBins < 5}
+            label="Open rest bins"
+            value={`${state.openBins}`}
+            note="Bins available to receive used frogs"
           />
         </div>
       </section>
@@ -318,5 +316,33 @@ function StatCard({ label, value, variant }: { label: string; value: number; var
       <p className="text-xs font-medium text-gray-500">{label}</p>
       <p className={`mt-1 text-2xl font-bold ${textColors[variant]}`}>{value}</p>
     </div>
+  );
+}
+
+function HowItWorks() {
+  const steps = [
+    { num: 1, label: "Define bins", desc: "Name your tanks/bins during setup" },
+    { num: 2, label: "Add frogs", desc: "Register frog counts per bin" },
+    { num: 3, label: "Log use", desc: "Record when frogs are taken" },
+    { num: 4, label: "Assign rest bin", desc: "System recommends a destination" },
+    { num: 5, label: "Rest timer starts", desc: "Countdown tracked automatically" },
+    { num: 6, label: "Get notified", desc: "Alert when rest period completes" },
+    { num: 7, label: "Return to rotation", desc: "Frogs marked ready for reuse" },
+  ];
+  return (
+    <section className="mt-10 rounded-xl border border-gray-200 bg-white p-6">
+      <h3 className="text-sm font-semibold text-gray-800">How XenoTrack works</h3>
+      <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        {steps.map((s) => (
+          <div key={s.num} className="flex items-start gap-2.5">
+            <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-brand-100 text-[10px] font-bold text-brand-700">{s.num}</span>
+            <div>
+              <p className="text-xs font-semibold text-gray-800">{s.label}</p>
+              <p className="text-[11px] text-gray-500">{s.desc}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
   );
 }

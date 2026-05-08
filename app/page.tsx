@@ -55,8 +55,8 @@ export default function HomePage() {
             </h1>
             <div className="mx-auto mt-3 h-1 w-16 rounded-full bg-gold-400" />
             <p className="mx-auto mt-5 max-w-2xl text-lg leading-relaxed text-gray-600">
-              XenoTrack is a colony register and tank-based handling system with rest timers
-              that maintains system continuity and institutional knowledge.
+              A private Xenopus colony register for bins, frogs, use/rest cycles,
+              rest-bin assignment, performance history, and long-term colony records.
             </p>
           </div>
           <div className="mt-8 flex flex-wrap justify-center gap-4 animate-in" style={{ animationDelay: "0.1s" }}>
@@ -79,10 +79,10 @@ export default function HomePage() {
       <section id="how" className="border-t border-gray-100 bg-gray-50/80 py-20">
         <div className="mx-auto max-w-5xl px-6">
           <h2 className="text-center text-2xl font-bold tracking-tight text-gray-900">
-            One loop, the entire colony
+            How it works
           </h2>
           <p className="mx-auto mt-3 max-w-lg text-center text-sm text-gray-600">
-            Set up once. Then repeat the use/rest cycle as long as you need.
+            Define your bins once. Then repeat the use → rest → return cycle for the life of the colony.
           </p>
 
           {/* Circular flow graphic */}
@@ -187,10 +187,10 @@ export default function HomePage() {
       <section className="py-20 text-center">
         <div className="mx-auto max-w-md">
           <h2 className="text-xl font-bold text-gray-900">
-            Start tracking your colony
+            Start your colony register
           </h2>
-          <p className="mt-2 text-gray-600">
-            Free to set up. No credit card required.
+          <p className="mt-2 text-sm text-gray-600">
+            Private workspace. Your data stays yours. Set up in under 3 minutes.
           </p>
           <div className="mt-8">
             <Link href="/signup" className="btn-primary px-8 py-3.5 text-base">

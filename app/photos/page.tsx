@@ -158,7 +158,7 @@ export default function PhotosPage() {
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Photos & Video</h1>
           <p className="mt-1 text-gray-600">
-            Bin-linked media for colony records, health documentation, and future monitoring.
+            Photos and videos linked to bins for colony records and health documentation.
           </p>
         </div>
         <button
@@ -210,7 +210,6 @@ export default function PhotosPage() {
                 <option value="side">Side</option>
                 <option value="health">Health check</option>
                 <option value="environment">Environment / Tank</option>
-                <option value="monitoring">Monitoring / Sentinel</option>
               </select>
             </div>
             <div>
@@ -276,7 +275,6 @@ export default function PhotosPage() {
           <option value="general">General</option>
           <option value="health">Health</option>
           <option value="environment">Environment</option>
-          <option value="monitoring">Monitoring</option>
         </select>
         <select
           value={filterMedia}
@@ -348,21 +346,6 @@ export default function PhotosPage() {
         )}
       </section>
 
-      {/* Sentinel teaser */}
-      <section className="mt-10 rounded-xl border border-dashed border-gold-300 bg-gold-50/30 p-5">
-        <div className="flex items-start gap-3">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gold-100">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#b8972e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
-          </div>
-          <div>
-            <h3 className="text-sm font-semibold text-gray-900">Frog Sentinel — Video Monitoring</h3>
-            <p className="mt-1 text-xs text-gray-600">
-              Future capability: continuous camera feeds per bin, automated event detection, time-lapse review, and health alerts.
-              Upload manual video clips now to build your colony video archive.
-            </p>
-          </div>
-        </div>
-      </section>
     </div>
   );
 }
