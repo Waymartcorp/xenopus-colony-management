@@ -25,27 +25,40 @@ export default function HomePage() {
 
       {/* Hero */}
       <section className="relative overflow-hidden">
-        {/* Abstract background: subtle grid + radial glow */}
-        <div className="pattern-grid absolute inset-0" />
-        <div className="absolute left-1/2 top-0 -translate-x-1/2 h-[600px] w-[900px] rounded-full bg-gradient-to-b from-brand-100/40 to-transparent blur-3xl" />
+        {/* Animated background particles — always visible */}
+        <div className="pointer-events-none absolute inset-0">
+          {Array.from({ length: 20 }).map((_, i) => (
+            <div
+              key={i}
+              className="absolute rounded-full"
+              style={{
+                width: `${6 + (i % 4) * 3}px`,
+                height: `${6 + (i % 4) * 3}px`,
+                background: ["#0d9488", "#2563eb", "#d97706", "#16a34a", "#6366f1", "#0d9488"][i % 6],
+                left: `${3 + (i * 5) % 94}%`,
+                top: `${8 + (i * 7) % 80}%`,
+                opacity: 0.15 + (i % 3) * 0.1,
+                animation: `float-particle ${3 + (i % 5) * 0.8}s ease-in-out infinite alternate`,
+                animationDelay: `${i * 0.2}s`,
+              }}
+            />
+          ))}
+        </div>
 
-        <div className="relative mx-auto max-w-5xl px-6 py-16 text-center sm:py-20">
+        {/* Radial glow */}
+        <div className="absolute left-1/2 top-0 -translate-x-1/2 h-[500px] w-[800px] rounded-full bg-gradient-to-b from-brand-100/50 to-transparent blur-3xl" />
+
+        <div className="relative mx-auto max-w-5xl px-6 py-14 text-center sm:py-16">
           <div className="animate-in">
-            <div className="mx-auto mb-6 flex items-center justify-center gap-1.5">
-              {/* Mini bin icons suggesting colony structure */}
-              {[0.4, 0.7, 1, 0.7, 0.4].map((opacity, i) => (
-                <div key={i} className="h-3 w-3 rounded-sm bg-brand-500 transition-transform hover:scale-125" style={{ opacity }} />
-              ))}
-            </div>
             <h1 className="text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl lg:text-6xl">
               Xenopus frog use workflow
             </h1>
-            <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-gray-600">
+            <p className="mx-auto mt-5 max-w-2xl text-lg leading-relaxed text-gray-600">
               XenoTrack is a colony register and tank-based handling system with rest timers
               that maintains system continuity and institutional knowledge.
             </p>
           </div>
-          <div className="mt-10 flex flex-wrap justify-center gap-4 animate-in" style={{ animationDelay: "0.1s" }}>
+          <div className="mt-8 flex flex-wrap justify-center gap-4 animate-in" style={{ animationDelay: "0.1s" }}>
             <Link href="/signup" className="btn-primary px-7 py-3.5 text-base">
               Create Account
             </Link>
@@ -54,8 +67,8 @@ export default function HomePage() {
             </Link>
           </div>
 
-          {/* Animated bin movement visualization */}
-          <div className="mt-16 animate-in" style={{ animationDelay: "0.2s" }}>
+          {/* Animated bin movement — directly below buttons */}
+          <div className="mt-10 animate-in" style={{ animationDelay: "0.15s" }}>
             <BinMovementGraphic />
           </div>
         </div>
