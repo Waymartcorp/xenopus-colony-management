@@ -5,12 +5,8 @@ import UserHeader from "@/components/UserHeader";
 export const metadata: Metadata = {
   title: "XenoTrack Colony Register",
   description:
-    "Private, time-aware Xenopus colony management for labs and institutions",
+    "Private Xenopus colony management — track bins, frogs, use/rest cycles, and performance.",
 };
-
-// TODO: Fetch enabled_modules from organization settings / module_trials
-// TODO: Hide optional nav sections when modules are not enabled
-// For now, show base nav always and optional modules with "(opt-in)" marker
 
 export default function RootLayout({
   children,
@@ -21,41 +17,44 @@ export default function RootLayout({
     <html lang="en">
       <body className="min-h-screen bg-gray-50">
         <div className="flex min-h-screen">
-          <nav className="hidden w-64 flex-shrink-0 border-r border-gray-200 bg-white lg:block">
-            <div className="flex h-16 items-center border-b border-gray-200 px-6">
-              <a href="/dashboard" className="text-lg font-bold text-brand-700">
-                XenoTrack
+          {/* Sidebar */}
+          <nav className="hidden w-60 flex-shrink-0 border-r border-gray-200/80 bg-white lg:flex lg:flex-col">
+            <div className="flex h-14 items-center border-b border-gray-100 px-5">
+              <a href="/dashboard" className="flex items-center gap-2">
+                <span className="flex h-7 w-7 items-center justify-center rounded-md bg-brand-600 text-xs font-bold text-white">X</span>
+                <span className="text-sm font-bold tracking-tight text-gray-900">XenoTrack</span>
               </a>
             </div>
-            <div className="flex flex-col gap-5 overflow-y-auto px-3 py-4">
-              {/* Core bin-cycling workflow */}
+            <div className="flex flex-1 flex-col gap-6 overflow-y-auto px-3 py-5">
               <NavSection title="Workflow">
-                <NavItem href="/dashboard" label="Dashboard" />
-                <NavItem href="/bins" label="Bins" />
-                <NavItem href="/use" label="Log Use & Rest" />
-                <NavItem href="/colony" label="Whole Colony" />
+                <NavItem href="/dashboard" label="Dashboard" icon="◉" />
+                <NavItem href="/bins" label="Bins" icon="◫" />
+                <NavItem href="/use" label="Log Use & Rest" icon="↻" accent />
+                <NavItem href="/colony" label="Whole Colony" icon="⬡" />
               </NavSection>
               <NavSection title="Records">
-                <NavItem href="/frogs" label="Frogs" />
-                <NavItem href="/events" label="Events" />
-                <NavItem href="/performance" label="Performance" />
-                <NavItem href="/photos" label="Photos" />
+                <NavItem href="/frogs" label="Frogs" icon="●" />
+                <NavItem href="/events" label="Events" icon="◆" />
+                <NavItem href="/performance" label="Performance" icon="◈" />
+                <NavItem href="/photos" label="Photos" icon="◲" />
               </NavSection>
               <NavSection title="Planning">
-                <NavItem href="/forecast" label="Forecast" />
-                <NavItem href="/capacity" label="Capacity" />
-                <NavItem href="/repopulation" label="Repopulation" />
-                <NavItem href="/notifications" label="Notifications" />
+                <NavItem href="/forecast" label="Forecast" icon="▷" />
+                <NavItem href="/capacity" label="Capacity" icon="▥" />
+                <NavItem href="/repopulation" label="Repopulation" icon="⊕" />
+                <NavItem href="/notifications" label="Notifications" icon="◎" />
               </NavSection>
-              <NavSection title="Settings">
-                <NavItem href="/workspace-profile" label="Workspace" />
-                <NavItem href="/account" label="Account" />
-              </NavSection>
+              <div className="mt-auto border-t border-gray-100 pt-4">
+                <NavItem href="/workspace-profile" label="Workspace" icon="⚙" />
+                <NavItem href="/account" label="Account" icon="○" />
+              </div>
             </div>
           </nav>
+
+          {/* Main */}
           <div className="flex flex-1 flex-col overflow-y-auto">
             <UserHeader />
-            <main className="flex-1">{children}</main>
+            <main className="flex-1 animate-fade-in">{children}</main>
           </div>
         </div>
       </body>
@@ -63,30 +62,23 @@ export default function RootLayout({
   );
 }
 
-function NavSection({
-  title,
-  children,
-}: {
-  title: string;
-  children: React.ReactNode;
-}) {
+function NavSection({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div>
-      <p className="mb-1 px-3 text-xs font-semibold uppercase tracking-wider text-gray-400">
-        {title}
-      </p>
+      <p className="section-title mb-2 px-3">{title}</p>
       <ul className="space-y-0.5">{children}</ul>
     </div>
   );
 }
 
-function NavItem({ href, label }: { href: string; label: string }) {
+function NavItem({ href, label, icon, accent }: { href: string; label: string; icon?: string; accent?: boolean }) {
   return (
     <li>
       <a
         href={href}
-        className="block rounded-md px-3 py-2 text-sm font-medium text-gray-700 hover:bg-brand-50 hover:text-brand-700"
+        className={`nav-item ${accent ? "text-brand-700 font-semibold" : ""}`}
       >
+        {icon && <span className="w-4 text-center text-xs opacity-60">{icon}</span>}
         {label}
       </a>
     </li>
