@@ -3,9 +3,9 @@ import { LogoLockup } from "@/components/Logo";
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-[#f0f2f6]">
       {/* Nav */}
-      <header className="sticky top-0 z-50 border-b border-gray-100 bg-white/80 backdrop-blur-md">
+      <header className="sticky top-0 z-50 border-b border-gray-200/60 bg-[#f0f2f6]/85 backdrop-blur-md">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
           <LogoLockup size={28} />
           <div className="flex items-center gap-3">
@@ -42,7 +42,7 @@ export default function HomePage() {
         </div>
 
         {/* Radial glow */}
-        <div className="absolute left-1/2 top-0 -translate-x-1/2 h-[500px] w-[800px] rounded-full bg-gradient-to-b from-brand-100/60 to-transparent blur-3xl" />
+        <div className="absolute left-1/2 top-0 -translate-x-1/2 h-[500px] w-[800px] rounded-full bg-gradient-to-b from-brand-200/40 to-transparent blur-3xl" />
 
         <div className="relative mx-auto max-w-5xl px-6 py-14 text-center sm:py-16">
           <div className="animate-in">
@@ -72,7 +72,7 @@ export default function HomePage() {
       </section>
 
       {/* Visual workflow */}
-      <section id="how" className="border-t border-gray-100 bg-gray-50/80 py-20">
+      <section id="how" className="border-t border-gray-200/50 bg-[#e8ecf2] py-20">
         <div className="mx-auto max-w-5xl px-6">
           <h2 className="text-center text-2xl font-bold tracking-tight text-gray-900">
             How it works
@@ -155,7 +155,7 @@ export default function HomePage() {
       </section>
 
       {/* Status showcase */}
-      <section className="border-t border-gray-100 bg-gray-50/80 py-20">
+      <section className="border-t border-gray-200/50 bg-[#e8ecf2] py-20">
         <div className="mx-auto max-w-4xl px-6">
           <h2 className="text-center text-2xl font-bold tracking-tight text-gray-900">
             Always know where you stand
@@ -197,7 +197,7 @@ export default function HomePage() {
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-gray-100 bg-gray-50 py-10 text-center">
+      <footer className="border-t border-gray-200/50 bg-[#e4e8ef] py-10 text-center">
         <div className="flex justify-center gap-6 text-sm text-gray-500">
           <Link href="/terms" className="transition-colors hover:text-gray-700">Terms</Link>
           <Link href="/privacy" className="transition-colors hover:text-gray-700">Privacy</Link>
