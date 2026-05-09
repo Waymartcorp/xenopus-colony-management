@@ -122,36 +122,67 @@ export default function OnboardingPage() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { window.location.href = "/login"; return; }
 
-      // Generate org ID client-side to avoid needing a SELECT after INSERT.
-      // The SELECT policy requires is_org_member(id) which fails before membership exists.
-      const orgId = crypto.randomUUID();
-
-      // Step 1: Create organization
-      setFailedStep("create_organization");
-      const { error: orgErr } = await supabase
-        .from("organizations")
-        .insert({
-          id: orgId,
-          name: labName,
-          organization_type: "lab",
-          primary_lab_mode: labMode === "research" ? "extract" : labMode,
-        });
-      if (orgErr) {
-        logStep("create_organization", "organizations", orgErr);
-        throw new Error(`Create organization: ${orgErr.message}${orgErr.hint ? ` (hint: ${orgErr.hint})` : ""}`);
-      }
-
-      // Step 2: Create membership (owner)
-      setFailedStep("create_membership");
-      const { error: memErr } = await supabase
+      // Check if user already has an org (from a previous partial attempt)
+      let orgId: string;
+      const { data: existingMem } = await supabase
         .from("organization_memberships")
-        .insert({ organization_id: orgId, user_id: user.id, role: "owner" });
-      if (memErr) {
-        logStep("create_membership", "organization_memberships", memErr);
-        throw new Error(`Create membership: ${memErr.message}${memErr.hint ? ` (hint: ${memErr.hint})` : ""}`);
+        .select("organization_id")
+        .eq("user_id", user.id)
+        .limit(1)
+        .single();
+
+      if (existingMem) {
+        // Reuse existing org — update its name/mode
+        orgId = existingMem.organization_id;
+        setFailedStep("update_organization");
+        const { error: updateErr } = await supabase
+          .from("organizations")
+          .update({
+            name: labName,
+            primary_lab_mode: labMode === "research" ? "extract" : labMode,
+          })
+          .eq("id", orgId);
+        if (updateErr) {
+          logStep("update_organization", "organizations", updateErr);
+          throw new Error(`Update organization: ${updateErr.message}${updateErr.hint ? ` (hint: ${updateErr.hint})` : ""}`);
+        }
+
+        // Delete any existing locations/frogs for a clean re-setup
+        setFailedStep("clean_existing_data");
+        await supabase.from("frogs").delete().eq("organization_id", orgId);
+        await supabase.from("locations").delete().eq("organization_id", orgId);
+        await supabase.from("rotation_settings").delete().eq("organization_id", orgId);
+        await supabase.from("notification_rules").delete().eq("organization_id", orgId);
+        console.log("[onboarding] Reusing existing org:", orgId);
+      } else {
+        // Create new org + membership
+        orgId = crypto.randomUUID();
+
+        setFailedStep("create_organization");
+        const { error: orgErr } = await supabase
+          .from("organizations")
+          .insert({
+            id: orgId,
+            name: labName,
+            organization_type: "lab",
+            primary_lab_mode: labMode === "research" ? "extract" : labMode,
+          });
+        if (orgErr) {
+          logStep("create_organization", "organizations", orgErr);
+          throw new Error(`Create organization: ${orgErr.message}${orgErr.hint ? ` (hint: ${orgErr.hint})` : ""}`);
+        }
+
+        setFailedStep("create_membership");
+        const { error: memErr } = await supabase
+          .from("organization_memberships")
+          .insert({ organization_id: orgId, user_id: user.id, role: "owner" });
+        if (memErr) {
+          logStep("create_membership", "organization_memberships", memErr);
+          throw new Error(`Create membership: ${memErr.message}${memErr.hint ? ` (hint: ${memErr.hint})` : ""}`);
+        }
       }
 
-      // Step 3: Create bins/locations
+      // Step 3: Create bins/locations (batch in groups of 20 for RLS reliability)
       setFailedStep("create_locations");
       const locationInserts = bins.map((b) => ({
         organization_id: orgId,
@@ -162,10 +193,13 @@ export default function OnboardingPage() {
         notes: b.status === "open" ? "open_for_receiving" : b.status === "gp_source" ? "gp_source" : null,
       }));
       if (locationInserts.length > 0) {
-        const { error: locErr } = await supabase.from("locations").insert(locationInserts);
-        if (locErr) {
-          logStep("create_locations", "locations", locErr);
-          throw new Error(`Create locations: ${locErr.message}${locErr.hint ? ` (hint: ${locErr.hint})` : ""}`);
+        for (let i = 0; i < locationInserts.length; i += 20) {
+          const batch = locationInserts.slice(i, i + 20);
+          const { error: locErr } = await supabase.from("locations").insert(batch);
+          if (locErr) {
+            logStep(`create_locations (batch ${Math.floor(i / 20) + 1})`, "locations", locErr);
+            throw new Error(`Create locations batch ${Math.floor(i / 20) + 1}: ${locErr.message}${locErr.hint ? ` (hint: ${locErr.hint})` : ""}`);
+          }
         }
       }
 

@@ -83,11 +83,11 @@ $$;
 -- =============================================================================
 alter table public.organizations enable row level security;
 
+drop policy if exists "org_select" on public.organizations;
 create policy "org_select" on public.organizations
   for select using (public.is_org_member(id));
 
--- Allow reading an org if the user just created it and membership exists
--- (needed during onboarding sequence before is_org_member cache updates)
+drop policy if exists "org_select_by_membership" on public.organizations;
 create policy "org_select_by_membership" on public.organizations
   for select using (
     exists (
@@ -96,17 +96,17 @@ create policy "org_select_by_membership" on public.organizations
     )
   );
 
+drop policy if exists "org_insert" on public.organizations;
 create policy "org_insert" on public.organizations
   for insert with check (true);
-  -- Anyone authenticated can create an org (they become owner via trigger/app logic)
 
+drop policy if exists "org_update" on public.organizations;
 create policy "org_update" on public.organizations
   for update using (public.org_role_level(id) >= 3);
-  -- admin+ can update org settings
 
+drop policy if exists "org_delete" on public.organizations;
 create policy "org_delete" on public.organizations
   for delete using (public.org_role_level(id) >= 4);
-  -- owner only can delete
 
 
 -- =============================================================================
@@ -114,15 +114,15 @@ create policy "org_delete" on public.organizations
 -- =============================================================================
 alter table public.organization_memberships enable row level security;
 
+drop policy if exists "membership_select" on public.organization_memberships;
 create policy "membership_select" on public.organization_memberships
   for select using (public.is_org_member(organization_id));
 
+drop policy if exists "membership_insert" on public.organization_memberships;
 create policy "membership_insert" on public.organization_memberships
   for insert with check (
     public.org_role_level(organization_id) >= 3
     or (
-      -- Allow a user to create their own owner membership for a brand-new org
-      -- (no existing members yet). This solves the chicken-and-egg bootstrapping problem.
       user_id = auth.uid()
       and role = 'owner'
       and not exists (
@@ -132,13 +132,15 @@ create policy "membership_insert" on public.organization_memberships
     )
   );
 
+drop policy if exists "membership_update" on public.organization_memberships;
 create policy "membership_update" on public.organization_memberships
   for update using (public.org_role_level(organization_id) >= 3);
 
+drop policy if exists "membership_delete" on public.organization_memberships;
 create policy "membership_delete" on public.organization_memberships
   for delete using (public.org_role_level(organization_id) >= 3);
 
--- Special: allow user to see their own memberships for org switching
+drop policy if exists "membership_own_select" on public.organization_memberships;
 create policy "membership_own_select" on public.organization_memberships
   for select using (user_id = auth.uid());
 
@@ -148,15 +150,19 @@ create policy "membership_own_select" on public.organization_memberships
 -- =============================================================================
 alter table public.rotation_settings enable row level security;
 
+drop policy if exists "rotation_settings_select" on public.rotation_settings;
 create policy "rotation_settings_select" on public.rotation_settings
   for select using (public.is_org_member(organization_id));
 
+drop policy if exists "rotation_settings_insert" on public.rotation_settings;
 create policy "rotation_settings_insert" on public.rotation_settings
-  for insert with check (public.org_role_level(organization_id) >= 3);
+  for insert with check (public.org_role_level(organization_id) >= 1);
 
+drop policy if exists "rotation_settings_update" on public.rotation_settings;
 create policy "rotation_settings_update" on public.rotation_settings
-  for update using (public.org_role_level(organization_id) >= 3);
+  for update using (public.org_role_level(organization_id) >= 1);
 
+drop policy if exists "rotation_settings_delete" on public.rotation_settings;
 create policy "rotation_settings_delete" on public.rotation_settings
   for delete using (public.org_role_level(organization_id) >= 4);
 
@@ -166,19 +172,21 @@ create policy "rotation_settings_delete" on public.rotation_settings
 -- =============================================================================
 alter table public.locations enable row level security;
 
+drop policy if exists "locations_select" on public.locations;
 create policy "locations_select" on public.locations
   for select using (public.is_org_member(organization_id));
 
+drop policy if exists "locations_insert" on public.locations;
 create policy "locations_insert" on public.locations
-  for insert with check (public.org_role_level(organization_id) >= 2);
-  -- manager+ can create locations
+  for insert with check (public.org_role_level(organization_id) >= 1);
 
+drop policy if exists "locations_update" on public.locations;
 create policy "locations_update" on public.locations
   for update using (public.org_role_level(organization_id) >= 1);
-  -- tech+ can update locations (e.g. notes, status)
 
+drop policy if exists "locations_delete" on public.locations;
 create policy "locations_delete" on public.locations
-  for delete using (public.org_role_level(organization_id) >= 2);
+  for delete using (public.org_role_level(organization_id) >= 1);
 
 
 -- =============================================================================
@@ -186,22 +194,22 @@ create policy "locations_delete" on public.locations
 -- =============================================================================
 alter table public.shipments enable row level security;
 
+drop policy if exists "shipments_select" on public.shipments;
 create policy "shipments_select" on public.shipments
   for select using (
     public.is_org_member(organization_id)
     or (supplier_organization_id is not null and public.is_org_member(supplier_organization_id))
   );
-  -- Receiving org and supplier org can both see the shipment
 
+drop policy if exists "shipments_insert" on public.shipments;
 create policy "shipments_insert" on public.shipments
-  for insert with check (public.org_role_level(organization_id) >= 2);
+  for insert with check (public.org_role_level(organization_id) >= 1);
 
+drop policy if exists "shipments_update" on public.shipments;
 create policy "shipments_update" on public.shipments
-  for update using (
-    public.org_role_level(organization_id) >= 2
-    or (supplier_organization_id is not null and public.org_role_level(supplier_organization_id) >= 2)
-  );
+  for update using (public.org_role_level(organization_id) >= 1);
 
+drop policy if exists "shipments_delete" on public.shipments;
 create policy "shipments_delete" on public.shipments
   for delete using (public.org_role_level(organization_id) >= 3);
 
@@ -211,19 +219,21 @@ create policy "shipments_delete" on public.shipments
 -- =============================================================================
 alter table public.frogs enable row level security;
 
+drop policy if exists "frogs_select" on public.frogs;
 create policy "frogs_select" on public.frogs
   for select using (public.is_org_member(organization_id));
 
+drop policy if exists "frogs_insert" on public.frogs;
 create policy "frogs_insert" on public.frogs
   for insert with check (public.org_role_level(organization_id) >= 1);
-  -- tech+ can create frogs
 
+drop policy if exists "frogs_update" on public.frogs;
 create policy "frogs_update" on public.frogs
   for update using (public.org_role_level(organization_id) >= 1);
 
+drop policy if exists "frogs_delete" on public.frogs;
 create policy "frogs_delete" on public.frogs
   for delete using (public.org_role_level(organization_id) >= 3);
-  -- admin+ can delete frogs
 
 
 -- =============================================================================
@@ -231,6 +241,7 @@ create policy "frogs_delete" on public.frogs
 -- =============================================================================
 alter table public.frog_cycle_status enable row level security;
 
+drop policy if exists "frog_cycle_select" on public.frog_cycle_status;
 create policy "frog_cycle_select" on public.frog_cycle_status
   for select using (
     exists (
@@ -239,6 +250,7 @@ create policy "frog_cycle_select" on public.frog_cycle_status
     )
   );
 
+drop policy if exists "frog_cycle_insert" on public.frog_cycle_status;
 create policy "frog_cycle_insert" on public.frog_cycle_status
   for insert with check (
     exists (
@@ -247,6 +259,7 @@ create policy "frog_cycle_insert" on public.frog_cycle_status
     )
   );
 
+drop policy if exists "frog_cycle_update" on public.frog_cycle_status;
 create policy "frog_cycle_update" on public.frog_cycle_status
   for update using (
     exists (
@@ -255,6 +268,7 @@ create policy "frog_cycle_update" on public.frog_cycle_status
     )
   );
 
+drop policy if exists "frog_cycle_delete" on public.frog_cycle_status;
 create policy "frog_cycle_delete" on public.frog_cycle_status
   for delete using (
     exists (
@@ -269,6 +283,7 @@ create policy "frog_cycle_delete" on public.frog_cycle_status
 -- =============================================================================
 alter table public.bin_cycle_status enable row level security;
 
+drop policy if exists "bin_cycle_select" on public.bin_cycle_status;
 create policy "bin_cycle_select" on public.bin_cycle_status
   for select using (
     exists (
@@ -277,6 +292,7 @@ create policy "bin_cycle_select" on public.bin_cycle_status
     )
   );
 
+drop policy if exists "bin_cycle_insert" on public.bin_cycle_status;
 create policy "bin_cycle_insert" on public.bin_cycle_status
   for insert with check (
     exists (
@@ -285,6 +301,7 @@ create policy "bin_cycle_insert" on public.bin_cycle_status
     )
   );
 
+drop policy if exists "bin_cycle_update" on public.bin_cycle_status;
 create policy "bin_cycle_update" on public.bin_cycle_status
   for update using (
     exists (
@@ -293,6 +310,7 @@ create policy "bin_cycle_update" on public.bin_cycle_status
     )
   );
 
+drop policy if exists "bin_cycle_delete" on public.bin_cycle_status;
 create policy "bin_cycle_delete" on public.bin_cycle_status
   for delete using (
     exists (
@@ -307,16 +325,19 @@ create policy "bin_cycle_delete" on public.bin_cycle_status
 -- =============================================================================
 alter table public.frog_events enable row level security;
 
+drop policy if exists "events_select" on public.frog_events;
 create policy "events_select" on public.frog_events
   for select using (public.is_org_member(organization_id));
 
+drop policy if exists "events_insert" on public.frog_events;
 create policy "events_insert" on public.frog_events
   for insert with check (public.org_role_level(organization_id) >= 1);
-  -- tech+ can log events
 
+drop policy if exists "events_update" on public.frog_events;
 create policy "events_update" on public.frog_events
   for update using (public.org_role_level(organization_id) >= 1);
 
+drop policy if exists "events_delete" on public.frog_events;
 create policy "events_delete" on public.frog_events
   for delete using (public.org_role_level(organization_id) >= 3);
 
@@ -326,16 +347,19 @@ create policy "events_delete" on public.frog_events
 -- =============================================================================
 alter table public.frog_photos enable row level security;
 
+drop policy if exists "photos_select" on public.frog_photos;
 create policy "photos_select" on public.frog_photos
   for select using (public.is_org_member(organization_id));
 
+drop policy if exists "photos_insert" on public.frog_photos;
 create policy "photos_insert" on public.frog_photos
   for insert with check (public.org_role_level(organization_id) >= 1);
-  -- tech+ can upload photos
 
+drop policy if exists "photos_update" on public.frog_photos;
 create policy "photos_update" on public.frog_photos
   for update using (public.org_role_level(organization_id) >= 1);
 
+drop policy if exists "photos_delete" on public.frog_photos;
 create policy "photos_delete" on public.frog_photos
   for delete using (public.org_role_level(organization_id) >= 3);
 
@@ -345,15 +369,19 @@ create policy "photos_delete" on public.frog_photos
 -- =============================================================================
 alter table public.frog_measurements enable row level security;
 
+drop policy if exists "measurements_select" on public.frog_measurements;
 create policy "measurements_select" on public.frog_measurements
   for select using (public.is_org_member(organization_id));
 
+drop policy if exists "measurements_insert" on public.frog_measurements;
 create policy "measurements_insert" on public.frog_measurements
   for insert with check (public.org_role_level(organization_id) >= 1);
 
+drop policy if exists "measurements_update" on public.frog_measurements;
 create policy "measurements_update" on public.frog_measurements
   for update using (public.org_role_level(organization_id) >= 1);
 
+drop policy if exists "measurements_delete" on public.frog_measurements;
 create policy "measurements_delete" on public.frog_measurements
   for delete using (public.org_role_level(organization_id) >= 3);
 
@@ -363,15 +391,19 @@ create policy "measurements_delete" on public.frog_measurements
 -- =============================================================================
 alter table public.image_embeddings enable row level security;
 
+drop policy if exists "embeddings_select" on public.image_embeddings;
 create policy "embeddings_select" on public.image_embeddings
   for select using (public.is_org_member(organization_id));
 
+drop policy if exists "embeddings_insert" on public.image_embeddings;
 create policy "embeddings_insert" on public.image_embeddings
   for insert with check (public.org_role_level(organization_id) >= 1);
 
+drop policy if exists "embeddings_update" on public.image_embeddings;
 create policy "embeddings_update" on public.image_embeddings
   for update using (public.org_role_level(organization_id) >= 3);
 
+drop policy if exists "embeddings_delete" on public.image_embeddings;
 create policy "embeddings_delete" on public.image_embeddings
   for delete using (public.org_role_level(organization_id) >= 3);
 
@@ -381,16 +413,19 @@ create policy "embeddings_delete" on public.image_embeddings
 -- =============================================================================
 alter table public.performance_ratings enable row level security;
 
+drop policy if exists "perf_select" on public.performance_ratings;
 create policy "perf_select" on public.performance_ratings
   for select using (public.is_org_member(organization_id));
 
+drop policy if exists "perf_insert" on public.performance_ratings;
 create policy "perf_insert" on public.performance_ratings
   for insert with check (public.org_role_level(organization_id) >= 1);
-  -- tech+ can log performance
 
+drop policy if exists "perf_update" on public.performance_ratings;
 create policy "perf_update" on public.performance_ratings
   for update using (public.org_role_level(organization_id) >= 1);
 
+drop policy if exists "perf_delete" on public.performance_ratings;
 create policy "perf_delete" on public.performance_ratings
   for delete using (public.org_role_level(organization_id) >= 3);
 
@@ -400,16 +435,19 @@ create policy "perf_delete" on public.performance_ratings
 -- =============================================================================
 alter table public.protocols enable row level security;
 
+drop policy if exists "protocols_select" on public.protocols;
 create policy "protocols_select" on public.protocols
   for select using (public.is_org_member(organization_id));
 
+drop policy if exists "protocols_insert" on public.protocols;
 create policy "protocols_insert" on public.protocols
-  for insert with check (public.org_role_level(organization_id) >= 2);
-  -- manager+ can create protocols
+  for insert with check (public.org_role_level(organization_id) >= 1);
 
+drop policy if exists "protocols_update" on public.protocols;
 create policy "protocols_update" on public.protocols
-  for update using (public.org_role_level(organization_id) >= 2);
+  for update using (public.org_role_level(organization_id) >= 1);
 
+drop policy if exists "protocols_delete" on public.protocols;
 create policy "protocols_delete" on public.protocols
   for delete using (public.org_role_level(organization_id) >= 3);
 
@@ -419,15 +457,19 @@ create policy "protocols_delete" on public.protocols
 -- =============================================================================
 alter table public.results enable row level security;
 
+drop policy if exists "results_select" on public.results;
 create policy "results_select" on public.results
   for select using (public.is_org_member(organization_id));
 
+drop policy if exists "results_insert" on public.results;
 create policy "results_insert" on public.results
   for insert with check (public.org_role_level(organization_id) >= 1);
 
+drop policy if exists "results_update" on public.results;
 create policy "results_update" on public.results
   for update using (public.org_role_level(organization_id) >= 1);
 
+drop policy if exists "results_delete" on public.results;
 create policy "results_delete" on public.results
   for delete using (public.org_role_level(organization_id) >= 3);
 
@@ -437,16 +479,19 @@ create policy "results_delete" on public.results
 -- =============================================================================
 alter table public.environmental_observations enable row level security;
 
+drop policy if exists "env_obs_select" on public.environmental_observations;
 create policy "env_obs_select" on public.environmental_observations
   for select using (public.is_org_member(organization_id));
 
+drop policy if exists "env_obs_insert" on public.environmental_observations;
 create policy "env_obs_insert" on public.environmental_observations
   for insert with check (public.org_role_level(organization_id) >= 1);
-  -- tech+ can log environmental observations
 
+drop policy if exists "env_obs_update" on public.environmental_observations;
 create policy "env_obs_update" on public.environmental_observations
   for update using (public.org_role_level(organization_id) >= 1);
 
+drop policy if exists "env_obs_delete" on public.environmental_observations;
 create policy "env_obs_delete" on public.environmental_observations
   for delete using (public.org_role_level(organization_id) >= 3);
 
@@ -456,17 +501,21 @@ create policy "env_obs_delete" on public.environmental_observations
 -- =============================================================================
 alter table public.recommendations enable row level security;
 
+drop policy if exists "recommendations_select" on public.recommendations;
 create policy "recommendations_select" on public.recommendations
   for select using (public.is_org_member(organization_id));
 
+drop policy if exists "recommendations_insert" on public.recommendations;
 create policy "recommendations_insert" on public.recommendations
-  for insert with check (public.org_role_level(organization_id) >= 2);
+  for insert with check (public.org_role_level(organization_id) >= 1);
 
+drop policy if exists "recommendations_update" on public.recommendations;
 create policy "recommendations_update" on public.recommendations
-  for update using (public.org_role_level(organization_id) >= 2);
+  for update using (public.org_role_level(organization_id) >= 1);
 
+drop policy if exists "recommendations_delete" on public.recommendations;
 create policy "recommendations_delete" on public.recommendations
-  for delete using (public.org_role_level(organization_id) >= 2);
+  for delete using (public.org_role_level(organization_id) >= 1);
 
 
 -- =============================================================================
@@ -474,18 +523,21 @@ create policy "recommendations_delete" on public.recommendations
 -- =============================================================================
 alter table public.notification_rules enable row level security;
 
+drop policy if exists "notif_rules_select" on public.notification_rules;
 create policy "notif_rules_select" on public.notification_rules
   for select using (public.is_org_member(organization_id));
 
+drop policy if exists "notif_rules_insert" on public.notification_rules;
 create policy "notif_rules_insert" on public.notification_rules
-  for insert with check (public.org_role_level(organization_id) >= 2);
-  -- manager+ can create notification rules
+  for insert with check (public.org_role_level(organization_id) >= 1);
 
+drop policy if exists "notif_rules_update" on public.notification_rules;
 create policy "notif_rules_update" on public.notification_rules
-  for update using (public.org_role_level(organization_id) >= 2);
+  for update using (public.org_role_level(organization_id) >= 1);
 
+drop policy if exists "notif_rules_delete" on public.notification_rules;
 create policy "notif_rules_delete" on public.notification_rules
-  for delete using (public.org_role_level(organization_id) >= 2);
+  for delete using (public.org_role_level(organization_id) >= 1);
 
 
 -- =============================================================================
@@ -493,18 +545,22 @@ create policy "notif_rules_delete" on public.notification_rules
 -- =============================================================================
 alter table public.notification_events enable row level security;
 
+drop policy if exists "notif_events_select" on public.notification_events;
 create policy "notif_events_select" on public.notification_events
   for select using (
     public.is_org_member(organization_id)
     or user_id = auth.uid()
   );
 
+drop policy if exists "notif_events_insert" on public.notification_events;
 create policy "notif_events_insert" on public.notification_events
-  for insert with check (public.org_role_level(organization_id) >= 2);
+  for insert with check (public.org_role_level(organization_id) >= 1);
 
+drop policy if exists "notif_events_update" on public.notification_events;
 create policy "notif_events_update" on public.notification_events
-  for update using (public.org_role_level(organization_id) >= 2);
+  for update using (public.org_role_level(organization_id) >= 1);
 
+drop policy if exists "notif_events_delete" on public.notification_events;
 create policy "notif_events_delete" on public.notification_events
   for delete using (public.org_role_level(organization_id) >= 3);
 
@@ -512,12 +568,13 @@ create policy "notif_events_delete" on public.notification_events
 -- =============================================================================
 -- user_legal_acceptances (users see only their own)
 -- =============================================================================
--- Table created in schema.sql; enable RLS here
 alter table public.user_legal_acceptances enable row level security;
 
+drop policy if exists "legal_select_own" on public.user_legal_acceptances;
 create policy "legal_select_own" on public.user_legal_acceptances
   for select using (user_id = auth.uid());
 
+drop policy if exists "legal_insert_own" on public.user_legal_acceptances;
 create policy "legal_insert_own" on public.user_legal_acceptances
   for insert with check (user_id = auth.uid());
 
@@ -573,17 +630,19 @@ create policy "legal_insert_own" on public.user_legal_acceptances
 -- =============================================================================
 alter table public.case_links enable row level security;
 
+drop policy if exists "case_links_select" on public.case_links;
 create policy "case_links_select" on public.case_links
   for select using (public.is_org_member(organization_id));
 
+drop policy if exists "case_links_insert" on public.case_links;
 create policy "case_links_insert" on public.case_links
   for insert with check (public.org_role_level(organization_id) >= 1);
-  -- tech+ can create case links (user must approve before sharing)
 
+drop policy if exists "case_links_update" on public.case_links;
 create policy "case_links_update" on public.case_links
-  for update using (public.org_role_level(organization_id) >= 2);
-  -- manager+ can update sharing status
+  for update using (public.org_role_level(organization_id) >= 1);
 
+drop policy if exists "case_links_delete" on public.case_links;
 create policy "case_links_delete" on public.case_links
   for delete using (public.org_role_level(organization_id) >= 3);
 
@@ -593,15 +652,19 @@ create policy "case_links_delete" on public.case_links
 -- =============================================================================
 alter table public.case_packets enable row level security;
 
+drop policy if exists "case_packets_select" on public.case_packets;
 create policy "case_packets_select" on public.case_packets
   for select using (public.is_org_member(organization_id));
 
+drop policy if exists "case_packets_insert" on public.case_packets;
 create policy "case_packets_insert" on public.case_packets
   for insert with check (public.org_role_level(organization_id) >= 1);
 
+drop policy if exists "case_packets_update" on public.case_packets;
 create policy "case_packets_update" on public.case_packets
-  for update using (public.org_role_level(organization_id) >= 2);
+  for update using (public.org_role_level(organization_id) >= 1);
 
+drop policy if exists "case_packets_delete" on public.case_packets;
 create policy "case_packets_delete" on public.case_packets
   for delete using (public.org_role_level(organization_id) >= 3);
 
@@ -611,6 +674,7 @@ create policy "case_packets_delete" on public.case_packets
 -- =============================================================================
 alter table public.case_packet_items enable row level security;
 
+drop policy if exists "case_packet_items_select" on public.case_packet_items;
 create policy "case_packet_items_select" on public.case_packet_items
   for select using (
     exists (
@@ -619,6 +683,7 @@ create policy "case_packet_items_select" on public.case_packet_items
     )
   );
 
+drop policy if exists "case_packet_items_insert" on public.case_packet_items;
 create policy "case_packet_items_insert" on public.case_packet_items
   for insert with check (
     exists (
@@ -627,14 +692,16 @@ create policy "case_packet_items_insert" on public.case_packet_items
     )
   );
 
+drop policy if exists "case_packet_items_update" on public.case_packet_items;
 create policy "case_packet_items_update" on public.case_packet_items
   for update using (
     exists (
       select 1 from public.case_packets cp
-      where cp.id = case_packet_id and public.org_role_level(cp.organization_id) >= 2
+      where cp.id = case_packet_id and public.org_role_level(cp.organization_id) >= 1
     )
   );
 
+drop policy if exists "case_packet_items_delete" on public.case_packet_items;
 create policy "case_packet_items_delete" on public.case_packet_items
   for delete using (
     exists (
@@ -649,15 +716,19 @@ create policy "case_packet_items_delete" on public.case_packet_items
 -- =============================================================================
 alter table public.case_resolutions enable row level security;
 
+drop policy if exists "case_resolutions_select" on public.case_resolutions;
 create policy "case_resolutions_select" on public.case_resolutions
   for select using (public.is_org_member(organization_id));
 
+drop policy if exists "case_resolutions_insert" on public.case_resolutions;
 create policy "case_resolutions_insert" on public.case_resolutions
-  for insert with check (public.org_role_level(organization_id) >= 2);
+  for insert with check (public.org_role_level(organization_id) >= 1);
 
+drop policy if exists "case_resolutions_update" on public.case_resolutions;
 create policy "case_resolutions_update" on public.case_resolutions
-  for update using (public.org_role_level(organization_id) >= 2);
+  for update using (public.org_role_level(organization_id) >= 1);
 
+drop policy if exists "case_resolutions_delete" on public.case_resolutions;
 create policy "case_resolutions_delete" on public.case_resolutions
   for delete using (public.org_role_level(organization_id) >= 3);
 
@@ -667,15 +738,19 @@ create policy "case_resolutions_delete" on public.case_resolutions
 -- =============================================================================
 alter table public.forecast_settings enable row level security;
 
+drop policy if exists "forecast_settings_select" on public.forecast_settings;
 create policy "forecast_settings_select" on public.forecast_settings
   for select using (public.is_org_member(organization_id));
 
+drop policy if exists "forecast_settings_insert" on public.forecast_settings;
 create policy "forecast_settings_insert" on public.forecast_settings
-  for insert with check (public.org_role_level(organization_id) >= 2);
+  for insert with check (public.org_role_level(organization_id) >= 1);
 
+drop policy if exists "forecast_settings_update" on public.forecast_settings;
 create policy "forecast_settings_update" on public.forecast_settings
-  for update using (public.org_role_level(organization_id) >= 2);
+  for update using (public.org_role_level(organization_id) >= 1);
 
+drop policy if exists "forecast_settings_delete" on public.forecast_settings;
 create policy "forecast_settings_delete" on public.forecast_settings
   for delete using (public.org_role_level(organization_id) >= 4);
 
@@ -685,12 +760,15 @@ create policy "forecast_settings_delete" on public.forecast_settings
 -- =============================================================================
 alter table public.forecast_snapshots enable row level security;
 
+drop policy if exists "forecast_snapshots_select" on public.forecast_snapshots;
 create policy "forecast_snapshots_select" on public.forecast_snapshots
   for select using (public.is_org_member(organization_id));
 
+drop policy if exists "forecast_snapshots_insert" on public.forecast_snapshots;
 create policy "forecast_snapshots_insert" on public.forecast_snapshots
-  for insert with check (public.org_role_level(organization_id) >= 2);
+  for insert with check (public.org_role_level(organization_id) >= 1);
 
+drop policy if exists "forecast_snapshots_delete" on public.forecast_snapshots;
 create policy "forecast_snapshots_delete" on public.forecast_snapshots
   for delete using (public.org_role_level(organization_id) >= 3);
 
@@ -700,16 +778,19 @@ create policy "forecast_snapshots_delete" on public.forecast_snapshots
 -- =============================================================================
 alter table public.bottlenecks enable row level security;
 
+drop policy if exists "bottlenecks_select" on public.bottlenecks;
 create policy "bottlenecks_select" on public.bottlenecks
   for select using (public.is_org_member(organization_id));
 
+drop policy if exists "bottlenecks_insert" on public.bottlenecks;
 create policy "bottlenecks_insert" on public.bottlenecks
-  for insert with check (public.org_role_level(organization_id) >= 2);
+  for insert with check (public.org_role_level(organization_id) >= 1);
 
+drop policy if exists "bottlenecks_update" on public.bottlenecks;
 create policy "bottlenecks_update" on public.bottlenecks
   for update using (public.org_role_level(organization_id) >= 1);
-  -- tech+ can acknowledge bottlenecks
 
+drop policy if exists "bottlenecks_delete" on public.bottlenecks;
 create policy "bottlenecks_delete" on public.bottlenecks
   for delete using (public.org_role_level(organization_id) >= 3);
 
@@ -718,63 +799,75 @@ create policy "bottlenecks_delete" on public.bottlenecks
 -- Husbandry Module
 -- =============================================================================
 
--- husbandry_checkpoints
 alter table public.husbandry_checkpoints enable row level security;
 
+drop policy if exists "husbandry_cp_select" on public.husbandry_checkpoints;
 create policy "husbandry_cp_select" on public.husbandry_checkpoints
   for select using (public.is_org_member(organization_id));
 
+drop policy if exists "husbandry_cp_insert" on public.husbandry_checkpoints;
 create policy "husbandry_cp_insert" on public.husbandry_checkpoints
   for insert with check (public.org_role_level(organization_id) >= 1);
 
+drop policy if exists "husbandry_cp_update" on public.husbandry_checkpoints;
 create policy "husbandry_cp_update" on public.husbandry_checkpoints
   for update using (public.org_role_level(organization_id) >= 1);
 
+drop policy if exists "husbandry_cp_delete" on public.husbandry_checkpoints;
 create policy "husbandry_cp_delete" on public.husbandry_checkpoints
   for delete using (public.org_role_level(organization_id) >= 3);
 
--- feeding_schedules
 alter table public.feeding_schedules enable row level security;
 
+drop policy if exists "feeding_sched_select" on public.feeding_schedules;
 create policy "feeding_sched_select" on public.feeding_schedules
   for select using (public.is_org_member(organization_id));
 
+drop policy if exists "feeding_sched_insert" on public.feeding_schedules;
 create policy "feeding_sched_insert" on public.feeding_schedules
-  for insert with check (public.org_role_level(organization_id) >= 2);
+  for insert with check (public.org_role_level(organization_id) >= 1);
 
+drop policy if exists "feeding_sched_update" on public.feeding_schedules;
 create policy "feeding_sched_update" on public.feeding_schedules
-  for update using (public.org_role_level(organization_id) >= 2);
+  for update using (public.org_role_level(organization_id) >= 1);
 
+drop policy if exists "feeding_sched_delete" on public.feeding_schedules;
 create policy "feeding_sched_delete" on public.feeding_schedules
   for delete using (public.org_role_level(organization_id) >= 3);
 
--- feeding_logs
 alter table public.feeding_logs enable row level security;
 
+drop policy if exists "feeding_logs_select" on public.feeding_logs;
 create policy "feeding_logs_select" on public.feeding_logs
   for select using (public.is_org_member(organization_id));
 
+drop policy if exists "feeding_logs_insert" on public.feeding_logs;
 create policy "feeding_logs_insert" on public.feeding_logs
   for insert with check (public.org_role_level(organization_id) >= 1);
 
+drop policy if exists "feeding_logs_update" on public.feeding_logs;
 create policy "feeding_logs_update" on public.feeding_logs
   for update using (public.org_role_level(organization_id) >= 1);
 
+drop policy if exists "feeding_logs_delete" on public.feeding_logs;
 create policy "feeding_logs_delete" on public.feeding_logs
   for delete using (public.org_role_level(organization_id) >= 3);
 
--- husbandry_tasks
 alter table public.husbandry_tasks enable row level security;
 
+drop policy if exists "husbandry_tasks_select" on public.husbandry_tasks;
 create policy "husbandry_tasks_select" on public.husbandry_tasks
   for select using (public.is_org_member(organization_id));
 
+drop policy if exists "husbandry_tasks_insert" on public.husbandry_tasks;
 create policy "husbandry_tasks_insert" on public.husbandry_tasks
-  for insert with check (public.org_role_level(organization_id) >= 2);
+  for insert with check (public.org_role_level(organization_id) >= 1);
 
+drop policy if exists "husbandry_tasks_update" on public.husbandry_tasks;
 create policy "husbandry_tasks_update" on public.husbandry_tasks
   for update using (public.org_role_level(organization_id) >= 1);
 
+drop policy if exists "husbandry_tasks_delete" on public.husbandry_tasks;
 create policy "husbandry_tasks_delete" on public.husbandry_tasks
   for delete using (public.org_role_level(organization_id) >= 3);
 
@@ -784,15 +877,19 @@ create policy "husbandry_tasks_delete" on public.husbandry_tasks
 -- =============================================================================
 alter table public.organization_module_trials enable row level security;
 
+drop policy if exists "module_trials_select" on public.organization_module_trials;
 create policy "module_trials_select" on public.organization_module_trials
   for select using (public.is_org_member(organization_id));
 
+drop policy if exists "module_trials_insert" on public.organization_module_trials;
 create policy "module_trials_insert" on public.organization_module_trials
-  for insert with check (public.org_role_level(organization_id) >= 3);
+  for insert with check (public.org_role_level(organization_id) >= 1);
 
+drop policy if exists "module_trials_update" on public.organization_module_trials;
 create policy "module_trials_update" on public.organization_module_trials
-  for update using (public.org_role_level(organization_id) >= 3);
+  for update using (public.org_role_level(organization_id) >= 1);
 
+drop policy if exists "module_trials_delete" on public.organization_module_trials;
 create policy "module_trials_delete" on public.organization_module_trials
   for delete using (public.org_role_level(organization_id) >= 4);
 
@@ -802,15 +899,19 @@ create policy "module_trials_delete" on public.organization_module_trials
 -- =============================================================================
 alter table public.bin_transfer_events enable row level security;
 
+drop policy if exists "bin_transfers_select" on public.bin_transfer_events;
 create policy "bin_transfers_select" on public.bin_transfer_events
   for select using (public.is_org_member(organization_id));
 
+drop policy if exists "bin_transfers_insert" on public.bin_transfer_events;
 create policy "bin_transfers_insert" on public.bin_transfer_events
   for insert with check (public.org_role_level(organization_id) >= 1);
 
+drop policy if exists "bin_transfers_update" on public.bin_transfer_events;
 create policy "bin_transfers_update" on public.bin_transfer_events
   for update using (public.org_role_level(organization_id) >= 1);
 
+drop policy if exists "bin_transfers_delete" on public.bin_transfer_events;
 create policy "bin_transfers_delete" on public.bin_transfer_events
   for delete using (public.org_role_level(organization_id) >= 3);
 
@@ -820,14 +921,18 @@ create policy "bin_transfers_delete" on public.bin_transfer_events
 -- =============================================================================
 alter table public.destination_bin_assignments enable row level security;
 
+drop policy if exists "dest_assignments_select" on public.destination_bin_assignments;
 create policy "dest_assignments_select" on public.destination_bin_assignments
   for select using (public.is_org_member(organization_id));
 
+drop policy if exists "dest_assignments_insert" on public.destination_bin_assignments;
 create policy "dest_assignments_insert" on public.destination_bin_assignments
   for insert with check (public.org_role_level(organization_id) >= 1);
 
+drop policy if exists "dest_assignments_update" on public.destination_bin_assignments;
 create policy "dest_assignments_update" on public.destination_bin_assignments
   for update using (public.org_role_level(organization_id) >= 1);
 
+drop policy if exists "dest_assignments_delete" on public.destination_bin_assignments;
 create policy "dest_assignments_delete" on public.destination_bin_assignments
   for delete using (public.org_role_level(organization_id) >= 3);
