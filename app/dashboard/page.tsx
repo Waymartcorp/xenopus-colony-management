@@ -58,16 +58,69 @@ export default function DashboardPage() {
         .select("*", { count: "exact", head: true })
         .eq("organization_id", orgId);
 
+      // Also check bin_transfer_events for activity
+      const { count: transferCount } = await supabase
+        .from("bin_transfer_events")
+        .select("*", { count: "exact", head: true })
+        .eq("organization_id", orgId);
+
+      const hasAnyEvents = ((eventCount ?? 0) + (transferCount ?? 0)) > 0;
+
+      // Compute cycle statuses from transfers
+      let restingBins = 0;
+      let readyBins = 0;
+      let overdueBins = 0;
+      let openBins = 0;
+
+      if (hasAnyEvents) {
+        const { data: transfers } = await supabase
+          .from("bin_transfer_events")
+          .select("destination_location_id, rest_complete_at")
+          .eq("organization_id", orgId);
+
+        const { data: locs } = await supabase
+          .from("locations")
+          .select("id, notes, status")
+          .eq("organization_id", orgId);
+
+        // Compute per-destination-bin status from most recent transfer
+        const destStatus = new Map<string, "resting" | "ready" | "overdue">();
+        for (const t of transfers ?? []) {
+          if (!t.rest_complete_at || destStatus.has(t.destination_location_id)) continue;
+          const restDate = new Date(t.rest_complete_at);
+          const now = new Date();
+          const daysRemaining = Math.ceil((restDate.getTime() - now.getTime()) / 86400000);
+          if (daysRemaining > 0) destStatus.set(t.destination_location_id, "resting");
+          else if (daysRemaining >= -45) destStatus.set(t.destination_location_id, "ready");
+          else destStatus.set(t.destination_location_id, "overdue");
+        }
+
+        for (const loc of locs ?? []) {
+          const ds = destStatus.get(loc.id);
+          if (ds === "resting") restingBins++;
+          else if (ds === "ready") readyBins++;
+          else if (ds === "overdue") overdueBins++;
+          else if (loc.notes === "open_for_receiving" || loc.status === "active") {
+            // Check if it has frogs — if empty, count as open
+            const { count: fc } = await supabase
+              .from("frogs")
+              .select("*", { count: "exact", head: true })
+              .eq("current_location_id", loc.id);
+            if ((fc ?? 0) === 0 || loc.notes === "open_for_receiving") openBins++;
+          }
+        }
+      }
+
       setState({
         hasBins: (binCount ?? 0) > 0,
         hasFrogs: (frogCount ?? 0) > 0,
-        hasEvents: (eventCount ?? 0) > 0,
+        hasEvents: hasAnyEvents,
         binCount: binCount ?? 0,
         frogCount: frogCount ?? 0,
-        restingBins: 0, // TODO: query bin_cycle_status
-        readyBins: 0,
-        overdueBins: 0,
-        openBins: 0,
+        restingBins,
+        readyBins,
+        overdueBins,
+        openBins,
       });
       setLoading(false);
     }

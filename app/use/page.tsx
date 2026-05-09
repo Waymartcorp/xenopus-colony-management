@@ -55,21 +55,20 @@ export default function LogUsePage() {
       if (!mem) { setLoading(false); return; }
       setOrgId(mem.organization_id);
 
-      // Get rotation settings
+      // Get rotation settings (rest_bin_grouping_window_days may not exist on older DBs)
       const { data: rot } = await supabase
         .from("rotation_settings")
-        .select("minimum_rest_days, rest_bin_grouping_window_days")
+        .select("minimum_rest_days")
         .eq("organization_id", mem.organization_id)
         .limit(1)
         .single();
       if (rot) {
         setRestDays(rot.minimum_rest_days ?? 90);
-        setGroupingWindowDays(rot.rest_bin_grouping_window_days ?? 2);
       }
 
       // Get recent transfers (for grouping logic)
       const windowStart = new Date();
-      windowStart.setDate(windowStart.getDate() - (rot?.rest_bin_grouping_window_days ?? 2));
+      windowStart.setDate(windowStart.getDate() - groupingWindowDays);
       const { data: transfers } = await supabase
         .from("bin_transfer_events")
         .select("destination_location_id, source_location_id, use_date, frog_count")
@@ -145,6 +144,20 @@ export default function LogUsePage() {
       const supabase = createBrowserSupabaseClient();
       const { data: { user } } = await supabase.auth.getUser();
 
+      // If grouped, find the original transfer ID to link
+      let groupedWithId: string | null = null;
+      if (groupedTransfer && destBinId === groupedTransfer.destination_location_id) {
+        const { data: origTransfer } = await supabase
+          .from("bin_transfer_events")
+          .select("id")
+          .eq("source_location_id", sourceBinId)
+          .eq("destination_location_id", destBinId)
+          .order("use_date", { ascending: false })
+          .limit(1)
+          .single();
+        if (origTransfer) groupedWithId = origTransfer.id;
+      }
+
       // Create bin_transfer_event
       const { error: transferErr } = await supabase.from("bin_transfer_events").insert({
         organization_id: orgId,
@@ -156,7 +169,7 @@ export default function LogUsePage() {
         rest_started_at: new Date(useDate).toISOString(),
         rest_complete_at: restCompleteDate.toISOString(),
         grouping_window_days: groupingWindowDays,
-        grouped_with_transfer_id: groupedTransfer && destBinId === groupedTransfer.destination_location_id ? undefined : undefined,
+        grouped_with_transfer_id: groupedWithId,
         placement_status: "assigned",
         performance_note: performanceNote || null,
         created_by: user?.id,
