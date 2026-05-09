@@ -27,13 +27,27 @@ export default function DashboardPage() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // Get user's org
-      const { data: mem } = await supabase
+      // Get user's org (retry once after short delay for post-onboarding redirect timing)
+      let mem: { organization_id: string } | null = null;
+      const { data: memData } = await supabase
         .from("organization_memberships")
         .select("organization_id")
         .eq("user_id", user.id)
         .limit(1)
         .single();
+      mem = memData;
+
+      if (!mem) {
+        // Retry after a brief delay — onboarding redirect may arrive before DB is consistent
+        await new Promise((r) => setTimeout(r, 1500));
+        const { data: retryData } = await supabase
+          .from("organization_memberships")
+          .select("organization_id")
+          .eq("user_id", user.id)
+          .limit(1)
+          .single();
+        mem = retryData;
+      }
 
       if (!mem) {
         setState({ hasBins: false, hasFrogs: false, hasEvents: false, binCount: 0, frogCount: 0, restingBins: 0, readyBins: 0, overdueBins: 0, openBins: 0 });

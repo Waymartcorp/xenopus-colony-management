@@ -254,28 +254,41 @@ export default function OnboardingPage() {
         }
       }
 
-      // Step 8: Create bin_cycle_status for each location
-      setFailedStep("create_bin_cycle_status");
-      const binCycleInserts = [];
-      for (const b of bins) {
-        const locId = locMap.get(b.label);
-        if (!locId) continue;
-        const cycleState = b.status === "open" ? "available" : b.status === "gp_source" ? "general_population" : "general_population";
-        binCycleInserts.push({
-          location_id: locId,
-          current_cycle_state: cycleState,
-          target_capacity: b.capacity,
-          current_count: b.startingFrogs,
-        });
-      }
-      if (binCycleInserts.length > 0) {
-        const { error: bcsErr } = await supabase.from("bin_cycle_status").insert(binCycleInserts);
-        if (bcsErr) {
-          logStep("create_bin_cycle_status", "bin_cycle_status", bcsErr);
-          throw new Error(`Create bin cycle status: ${bcsErr.message}${bcsErr.hint ? ` (hint: ${bcsErr.hint})` : ""}`);
+      // Step 8: Create bin_cycle_status for each location (non-fatal — status is computed from transfers)
+      try {
+        const binCycleInserts = [];
+        for (const b of bins) {
+          const locId = locMap.get(b.label);
+          if (!locId) continue;
+          const cycleState = b.status === "open" ? "available" : "general_population";
+          binCycleInserts.push({
+            location_id: locId,
+            current_cycle_state: cycleState,
+            target_capacity: b.capacity,
+            current_count: b.startingFrogs,
+          });
         }
+        if (binCycleInserts.length > 0) {
+          const { error: bcsErr } = await supabase.from("bin_cycle_status").insert(binCycleInserts);
+          if (bcsErr) {
+            console.warn("[onboarding] bin_cycle_status insert skipped (non-fatal):", bcsErr.message);
+          }
+        }
+      } catch (bcsError) {
+        console.warn("[onboarding] bin_cycle_status step skipped:", bcsError);
       }
 
+      // Verify colony was created before redirecting
+      const { count: verifyCount } = await supabase
+        .from("locations")
+        .select("*", { count: "exact", head: true })
+        .eq("organization_id", orgId);
+
+      if ((verifyCount ?? 0) === 0) {
+        throw new Error("Colony creation appeared to succeed but no locations were found. Please check your database policies and try again.");
+      }
+
+      console.log("[onboarding] Colony created successfully:", { orgId, bins: verifyCount, frogs: frogInserts.length });
       window.location.href = "/dashboard";
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Unknown setup error.";
