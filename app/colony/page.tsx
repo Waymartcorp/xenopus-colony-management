@@ -73,15 +73,21 @@ export default function ColonyPage() {
       }
 
       if (locs) {
-        const binData: BinSummary[] = [];
+        // Single query: get frog counts grouped by location
+        const { data: frogCounts } = await supabase
+          .from("frogs")
+          .select("current_location_id")
+          .eq("organization_id", orgId);
+        const frogCountMap = new Map<string, number>();
         let total = 0;
+        for (const f of frogCounts ?? []) {
+          frogCountMap.set(f.current_location_id, (frogCountMap.get(f.current_location_id) ?? 0) + 1);
+          total++;
+        }
+
+        const binData: BinSummary[] = [];
         for (const loc of locs) {
-          const { count } = await supabase
-            .from("frogs")
-            .select("*", { count: "exact", head: true })
-            .eq("current_location_id", loc.id);
-          const fc = count ?? 0;
-          total += fc;
+          const fc = frogCountMap.get(loc.id) ?? 0;
 
           // Compute cycle status from transfer data
           let displayStatus = fc === 0 ? "open" : "occupied";

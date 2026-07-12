@@ -51,17 +51,21 @@ export default function BinsPage() {
         .eq("organization_id", mem.organization_id)
         .order("label");
 
+      const { data: allFrogs } = await supabase
+        .from("frogs")
+        .select("current_location_id")
+        .eq("organization_id", mem.organization_id);
+
       if (locs && locs.length > 0) {
+        const frogCountMap = new Map<string, number>();
+        for (const f of allFrogs ?? []) {
+          frogCountMap.set(f.current_location_id, (frogCountMap.get(f.current_location_id) ?? 0) + 1);
+        }
+
         const binData: Bin[] = [];
         for (const loc of locs) {
-          const { count } = await supabase
-            .from("frogs")
-            .select("*", { count: "exact", head: true })
-            .eq("current_location_id", loc.id);
-
-          const fc = count ?? 0;
+          const fc = frogCountMap.get(loc.id) ?? 0;
           const cap = loc.capacity ?? 8;
-          // Derive status: if notes indicate special status, use it
           let receivingStatus = fc === 0 ? "open" : "occupied";
           if (loc.notes === "open_for_receiving") receivingStatus = "open";
           else if (loc.notes === "gp_source") receivingStatus = "gp_source";

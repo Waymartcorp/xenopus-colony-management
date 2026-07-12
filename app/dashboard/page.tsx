@@ -109,18 +109,20 @@ export default function DashboardPage() {
           else destStatus.set(t.destination_location_id, "overdue");
         }
 
+        // Single query for frog counts per location
+        const { data: frogLocs } = await supabase
+          .from("frogs")
+          .select("current_location_id")
+          .eq("organization_id", orgId);
+        const frogLocSet = new Set((frogLocs ?? []).map((f) => f.current_location_id));
+
         for (const loc of locs ?? []) {
           const ds = destStatus.get(loc.id);
           if (ds === "resting") restingBins++;
           else if (ds === "ready") readyBins++;
           else if (ds === "overdue") overdueBins++;
-          else if (loc.notes === "open_for_receiving" || loc.status === "active") {
-            // Check if it has frogs — if empty, count as open
-            const { count: fc } = await supabase
-              .from("frogs")
-              .select("*", { count: "exact", head: true })
-              .eq("current_location_id", loc.id);
-            if ((fc ?? 0) === 0 || loc.notes === "open_for_receiving") openBins++;
+          else if (loc.notes === "open_for_receiving" || !frogLocSet.has(loc.id)) {
+            openBins++;
           }
         }
       }
