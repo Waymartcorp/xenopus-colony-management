@@ -3,6 +3,9 @@
 import { useEffect, useState } from "react";
 import { createBrowserSupabaseClient } from "@/lib/supabase";
 
+const TERMS_VERSION = "xenotrack-terms-v1-early-access";
+const PRIVACY_VERSION = "xenotrack-privacy-v1-early-access";
+
 export default function UserHeader() {
   const [userName, setUserName] = useState<string>("—");
   const [orgName, setOrgName] = useState<string>("");
@@ -14,6 +17,23 @@ export default function UserHeader() {
       const supabase = createBrowserSupabaseClient();
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
+
+      // Check legal acceptance — redirect if missing (skip on accept-terms page itself)
+      if (!window.location.pathname.startsWith("/accept-terms")) {
+        const { data: acceptance } = await supabase
+          .from("user_legal_acceptances")
+          .select("id")
+          .eq("user_id", user.id)
+          .eq("terms_version", TERMS_VERSION)
+          .eq("privacy_version", PRIVACY_VERSION)
+          .limit(1)
+          .maybeSingle();
+
+        if (!acceptance) {
+          window.location.href = "/accept-terms";
+          return;
+        }
+      }
 
       setUserName(user.user_metadata?.full_name ?? user.email ?? "—");
 

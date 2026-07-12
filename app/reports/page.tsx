@@ -267,6 +267,11 @@ export default function ReportsPage() {
         Download your colony records as CSV for backup, analysis, or institutional reporting.
       </p>
 
+      {/* Trust / reassurance */}
+      <div className="mt-4 rounded-lg border border-brand-100 bg-brand-50/50 p-3 text-xs text-gray-600">
+        Your lab can export its records at any time. XenoTrack is not intended to lock users into the system. Exports include only data from your workspace and are generated directly in your browser.
+      </div>
+
       {/* Date range filter */}
       <div className="mt-6 flex flex-wrap items-center gap-2">
         <span className="text-xs font-medium text-gray-500">Date range:</span>

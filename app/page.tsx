@@ -57,12 +57,15 @@ export default function HomePage() {
           </div>
           <div className="mt-8 flex flex-wrap justify-center gap-4 animate-in" style={{ animationDelay: "0.1s" }}>
             <Link href="/signup" className="btn-primary px-7 py-3.5 text-base">
-              Create Account
+              Create Your Account
             </Link>
             <Link href="/login" className="btn-secondary px-7 py-3.5 text-base">
               Log In
             </Link>
           </div>
+          <p className="mt-3 text-xs text-gray-500 animate-in" style={{ animationDelay: "0.15s" }}>
+            Create your XenoTrack account · Set up your lab workspace · Start tracking
+          </p>
 
           {/* Animated bin movement — directly below buttons */}
           <div className="mt-10 animate-in" style={{ animationDelay: "0.15s" }}>

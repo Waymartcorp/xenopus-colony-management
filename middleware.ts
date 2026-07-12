@@ -9,6 +9,7 @@ const PUBLIC_ROUTES = new Set([
   "/reset-password",
   "/terms",
   "/privacy",
+  "/accept-terms",
 ]);
 
 const PUBLIC_PREFIXES = [

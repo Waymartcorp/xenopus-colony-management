@@ -97,6 +97,11 @@ export default function LoginPage() {
             Create one
           </Link>
         </p>
+
+        <div className="mt-8 flex justify-center gap-4 text-xs text-gray-400">
+          <Link href="/terms" className="hover:text-gray-600">Terms</Link>
+          <Link href="/privacy" className="hover:text-gray-600">Privacy</Link>
+        </div>
       </div>
     </div>
   );
