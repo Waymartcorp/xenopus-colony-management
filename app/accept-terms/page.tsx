@@ -4,9 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { createBrowserSupabaseClient } from "@/lib/supabase";
 import { LogoFull } from "@/components/Logo";
-
-const TERMS_VERSION = "xenotrack-terms-v1-early-access";
-const PRIVACY_VERSION = "xenotrack-privacy-v1-early-access";
+import { TERMS_VERSION, PRIVACY_VERSION } from "@/lib/legal";
 
 export default function AcceptTermsPage() {
   const [accepted, setAccepted] = useState(false);

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { createBrowserSupabaseClient } from "@/lib/supabase";
+import { hasAcceptedCurrentLegal } from "@/lib/legal";
 
 // TODO: Replace with real queries against locations, frogs, frog_events, bin_cycle_status
 
@@ -26,6 +27,14 @@ export default function DashboardPage() {
       const supabase = createBrowserSupabaseClient();
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
+
+      // Legal-acceptance gate: existing users without a recorded acceptance of
+      // the current Terms/Privacy must accept before reaching the dashboard.
+      const acceptedLegal = await hasAcceptedCurrentLegal(user.id);
+      if (!acceptedLegal) {
+        window.location.href = "/accept-terms";
+        return;
+      }
 
       // Get user's org (retry once after short delay for post-onboarding redirect timing)
       let mem: { organization_id: string } | null = null;

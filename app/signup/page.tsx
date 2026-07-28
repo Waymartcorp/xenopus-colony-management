@@ -5,21 +5,13 @@ import Link from "next/link";
 import { signUp } from "@/lib/auth";
 import { createBrowserSupabaseClient } from "@/lib/supabase";
 import { LogoFull } from "@/components/Logo";
-
-const TERMS_VERSION = "xenotrack-terms-v1-early-access";
-const PRIVACY_VERSION = "xenotrack-privacy-v1-early-access";
-
-const ADMIN_ALLOWLIST = [
-  "robweymouth@gmail.com",
-  "rob@xenopus1.com",
-];
-
-function isAllowedEmail(email: string): boolean {
-  const lower = email.toLowerCase().trim();
-  if (ADMIN_ALLOWLIST.includes(lower)) return true;
-  if (lower.endsWith(".edu")) return true;
-  return false;
-}
+import {
+  TERMS_VERSION,
+  PRIVACY_VERSION,
+  ADMIN_CONTACT,
+  NOT_ELIGIBLE_MESSAGE,
+  isAllowedEmail,
+} from "@/lib/legal";
 
 export default function SignupPage() {
   const [name, setName] = useState("");
@@ -36,9 +28,7 @@ export default function SignupPage() {
     setError(null);
 
     if (!isAllowedEmail(email)) {
-      setError(
-        "XenoTrack early access is currently limited to university-affiliated users. Please sign up with a .edu email address. If your institution does not use .edu or you need access as an approved collaborator, contact the administrator at rob@xenopus1.com."
-      );
+      setError(NOT_ELIGIBLE_MESSAGE);
       return;
     }
 
@@ -117,8 +107,23 @@ export default function SignupPage() {
           </p>
         </div>
 
+        {/* Early-access eligibility notice */}
+        <div className="mt-6 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs leading-relaxed text-amber-900">
+          <p className="font-semibold">
+            XenoTrack early access is currently limited to university-affiliated users.
+          </p>
+          <p className="mt-1">
+            Please sign up with a <strong>.edu</strong> email address. If your institution does not
+            use .edu or you need access as an approved collaborator, contact the administrator at{" "}
+            <a href={`mailto:${ADMIN_CONTACT}`} className="font-medium underline hover:text-amber-950">
+              {ADMIN_CONTACT}
+            </a>
+            .
+          </p>
+        </div>
+
         {/* Hosted model explanation */}
-        <div className="mt-6 rounded-lg border border-brand-100 bg-brand-50/50 p-3 text-xs leading-relaxed text-gray-600">
+        <div className="mt-4 rounded-lg border border-brand-100 bg-brand-50/50 p-3 text-xs leading-relaxed text-gray-600">
           <p>
             XenoTrack is a hosted colony recordkeeping system. Your lab workspace is private to your account and authorized team members. Colony records are stored securely in the XenoTrack database and can be exported as CSV files at any time.
           </p>
